@@ -1,13 +1,14 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import { prisma } from "@/lib/prisma";
+import { authConfig } from "./auth.config";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
-  trustHost: true,
+  ...authConfig,
   providers: [
     Credentials({
       name: "credentials",
@@ -24,39 +25,38 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!user || !user.password) return null;
 
-        const valid = await bcrypt.compare(
+        const isValid = await bcrypt.compare(
           credentials.password as string,
           user.password
         );
-        if (!valid) return null;
+
+        if (!isValid) return null;
 
         return {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role as "user" | "admin",
+          role: user.role,
         };
       },
     }),
   ],
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
       }
       return token;
     },
-    session({ session, token }) {
-      // Используем Object.assign чтобы обойти проверку типов
-      Object.assign(session.user, {
-        id: token.id,
-        role: token.role,
-      });
+    async session({ session, token }) {
+      if (token) {
+        Object.assign(session.user, {
+          id: token.id,
+          role: token.role,
+        });
+      }
       return session;
     },
-  },
-  pages: {
-    signIn: "/account",
   },
 });
