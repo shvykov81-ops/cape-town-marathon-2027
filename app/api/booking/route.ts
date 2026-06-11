@@ -105,23 +105,27 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    let userWithPhone = user;
-    if (phone) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { phone },
-      });
-      userWithPhone = await prisma.user.findUniqueOrThrow({
-        where: { id: user.id },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          phone: true,
-          role: true,
-        },
-      });
-    }
+      let userWithPhone = user;
+      if (phone) {
+          await prisma.user.update({
+              where: { id: user.id },
+              data: { phone },
+          });
+          const freshUser = await prisma.user.findUniqueOrThrow({
+              where: { id: user.id },
+              select: {
+                  id: true,
+                  email: true,
+                  name: true,
+                  phone: true,
+                  role: true,
+              },
+          });
+          userWithPhone = {
+              ...freshUser,
+              role: freshUser.role as "user" | "admin",
+          };
+      }
 
     syncBookingToSheet(booking, userWithPhone).catch(console.error);
 
