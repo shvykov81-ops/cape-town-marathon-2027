@@ -46,7 +46,6 @@ export async function POST(req: NextRequest) {
       phone,
     } = parsed.data;
 
-    // Validate dates
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
 
@@ -64,7 +63,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate package exists
     const pkg = await prisma.package.findUnique({
       where: { id: packageId },
     });
@@ -75,7 +73,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate trainer exists (if provided)
     if (trainerId) {
       const trainer = await prisma.trainer.findUnique({
         where: { id: trainerId },
@@ -108,14 +105,12 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Update phone and fetch fresh user data
     let userWithPhone = user;
     if (phone) {
       await prisma.user.update({
         where: { id: user.id },
         data: { phone },
       });
-      // Fetch fresh user with updated phone
       userWithPhone = await prisma.user.findUniqueOrThrow({
         where: { id: user.id },
         select: {
@@ -123,6 +118,7 @@ export async function POST(req: NextRequest) {
           email: true,
           name: true,
           phone: true,
+          role: true,
         },
       });
     }
