@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // directUrl убран — не нужен для direct connection
 }
 
 model Account {
@@ -42,78 +43,74 @@ model VerificationToken {
 }
 
 model User {
-  id              String    @id @default(cuid())
-  email           String    @unique
-  emailVerified   DateTime?
-  image           String?
-  name            String?
-  password        String?
-  firstName       String?
-  lastName        String?
-  phone           String?
-  passportNumber  String?
-  nationality     String?
-  dateOfBirth     DateTime?
+  id               String          @id @default(cuid())
+  email            String          @unique
+  emailVerified    DateTime?
+  image            String?
+  name             String?
+  password         String?
+  firstName        String?
+  lastName         String?
+  phone            String?
+  passportNumber   String?
+  nationality      String?
+  dateOfBirth      DateTime?
   emergencyContact String?
-  medicalNotes    String?
-  telegramId      String?
-  role            String    @default("user")
-
-  accounts        Account[]
-  sessions        Session[]
-  bookings        Booking[]
-  documents       Document[]
-  checklistItems  ChecklistItem[]
-  reviews         Review[]
-  notifications   Notification[]
-  blogPosts       BlogPost[]
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  medicalNotes     String?
+  telegramId       String?
+  role             String          @default("user")
+  accounts         Account[]
+  sessions         Session[]
+  bookings         Booking[]
+  documents        Document[]
+  checklistItems   ChecklistItem[]
+  reviews          Review[]
+  notifications    Notification[]
+  blogPosts        BlogPost[]
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 
   @@index([role])
 }
 
 model Booking {
-  id            String   @id @default(cuid())
-  userId        String
-  packageId     String
-  trainerId     String?
-  paymentId     String?  @unique
-  status        String   @default("pending")
-  checkInDate   DateTime
-  checkOutDate  DateTime
-  guestsCount   Int      @default(1)
-  totalPrice    Decimal  @db.Decimal(10, 2)
-  telegramNotif Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  user      User        @relation(fields: [userId], references: [id])
-  package   Package     @relation(fields: [packageId], references: [id])
-  trainer   Trainer?    @relation(fields: [trainerId], references: [id])
-  payment   Payment?
-  transfers Transfer[]
-  excursions Excursion[]
-  reviews    Review[]
+  id              String      @id @default(cuid())
+  userId          String
+  packageId       String
+  trainerId       String?
+  paymentId       String?     @unique
+  status          String      @default("pending")
+  checkInDate     DateTime
+  checkOutDate    DateTime
+  guestsCount     Int         @default(1)
+  totalPrice      Decimal     @db.Decimal(10, 2)
+  telegramNotif   Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  user            User        @relation(fields: [userId], references: [id])
+  package         Package     @relation(fields: [packageId], references: [id])
+  trainer         Trainer?    @relation(fields: [trainerId], references: [id])
+  payment         Payment?
+  transfers       Transfer[]
+  excursions      Excursion[]
+  reviews         Review[]
 }
 
 model Package {
-  id              String   @id @default(cuid())
+  id              String          @id @default(cuid())
   name            String
   type            String
   durationDays    Int
-  priceBase       Decimal  @db.Decimal(10, 2)
+  priceBase       Decimal         @db.Decimal(10, 2)
   maxParticipants Int
   description     String
   includes        String[]
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  bookings Booking[]
-  options  PackageOption[]
-  trainers PackageTrainer[]
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  bookings        Booking[]
+  options         PackageOption[]
+  trainers        PackageTrainer[]
 }
 
 model PackageOption {
@@ -123,8 +120,7 @@ model PackageOption {
   priceAdd  Decimal @db.Decimal(10, 2)
   category  String
   isActive  Boolean @default(true)
-
-  package Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  package   Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
 }
 
 model PackageTrainer {
@@ -134,9 +130,8 @@ model PackageTrainer {
   role      String   @default("coach")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  package Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  trainer Trainer @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  package   Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  trainer   Trainer  @relation(fields: [trainerId], references: [id], onDelete: Cascade)
 
   @@unique([packageId, trainerId])
 }
@@ -150,8 +145,7 @@ model Payment {
   provider      String?
   transactionId String?
   paidAt        DateTime?
-
-  booking Booking @relation(fields: [bookingId], references: [id])
+  booking       Booking  @relation(fields: [bookingId], references: [id])
 }
 
 model Transfer {
@@ -163,57 +157,53 @@ model Transfer {
   datetime     DateTime
   vehicleType  String?
   driverName   String?
-
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking      Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 }
 
 model Excursion {
-  id           String  @id @default(cuid())
-  bookingId    String
-  name         String
-  description  String
+  id            String  @id @default(cuid())
+  bookingId     String
+  name          String
+  description   String
   durationHours Int
-  price        Decimal @db.Decimal(10, 2)
-  meetingPoint String?
-  maxGroupSize Int?
-  imageUrl     String?
-
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  price         Decimal @db.Decimal(10, 2)
+  meetingPoint  String?
+  maxGroupSize  Int?
+  imageUrl      String?
+  booking       Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 }
 
 model Review {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   userId      String
   bookingId   String?
   trainerId   String?
   rating      Int
   text        String
   images      String[]
-  isPublished Boolean  @default(false)
-  createdAt   DateTime @default(now())
-
-  user    User     @relation(fields: [userId], references: [id])
-  booking Booking? @relation(fields: [bookingId], references: [id])
-  trainer Trainer? @relation(fields: [trainerId], references: [id])
+  isPublished Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id])
+  booking     Booking?  @relation(fields: [bookingId], references: [id])
+  trainer     Trainer?  @relation(fields: [trainerId], references: [id])
 }
 
 model Notification {
-  id      String   @id @default(cuid())
-  userId  String
-  type    String
-  channel String
-  status  String   @default("pending")
-  payload String?
-  sentAt  DateTime?
-  readAt  DateTime?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  channel   String
+  status    String    @default("pending")
+  payload   String?
+  sentAt    DateTime?
+  readAt    DateTime?
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model BlogPost {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   title         String
-  slug          String   @unique
+  slug          String    @unique
   content       String
   excerpt       String?
   featuredImage String?
@@ -221,33 +211,31 @@ model BlogPost {
   tags          String[]
   publishedAt   DateTime?
   authorId      String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  author User? @relation(fields: [authorId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  author        User?     @relation(fields: [authorId], references: [id])
 }
 
 model Trainer {
-  id            String   @id @default(cuid())
-  firstName     String
-  lastName      String
-  bio           String
-  credentials   String?
-  photoUrl      String?
-  photos        String[]
-  instagramUrl  String?
-  tripsterUrl   String?
-  rating        Float    @default(0)
-  reviewCount   Int      @default(0)
-  specialties   String[]
-  languages     String[]
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  bookings Booking[]
-  reviews  Review[]
-  packages PackageTrainer[]
+  id           String          @id @default(cuid())
+  firstName    String
+  lastName     String
+  bio          String
+  credentials  String?
+  photoUrl     String?
+  photos       String[]
+  instagramUrl String?
+  tripsterUrl  String?
+  rating       Float           @default(0)
+  reviewCount  Int             @default(0)
+  specialties  String[]
+  languages    String[]
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  bookings     Booking[]
+  reviews      Review[]
+  packages     PackageTrainer[]
 }
 
 model Document {
@@ -258,8 +246,7 @@ model Document {
   url        String
   status     String   @default("pending")
   uploadedAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ChecklistItem {
@@ -269,8 +256,7 @@ model ChecklistItem {
   category  String
   completed Boolean  @default(false)
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ContactMessage {

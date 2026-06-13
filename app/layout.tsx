@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic';
-
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -18,6 +16,8 @@ export const metadata: Metadata = {
     "Africa's first Abbott World Marathon Majors Candidate. Prep camp booking platform.",
 };
 
+export const dynamic = "force-dynamic"; // ← ПЕРЕНЕСЕНО сюда, после импортов
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -25,15 +25,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <meta charSet="utf-8" />
-      </head>
-      <body
-        className={`${inter.variable} font-sans antialiased bg-neutral-950 text-white min-h-screen`}
-      >
+      <body className={inter.variable}>
         <Providers>
           <Navigation />
-          <main>{children}</main>
+          {children}
           <Footer />
         </Providers>
       </body>

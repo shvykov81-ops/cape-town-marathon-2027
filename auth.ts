@@ -5,6 +5,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true, // ← ДОБАВЛЕНО: фиксит UntrustedHost в production
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   pages: {
