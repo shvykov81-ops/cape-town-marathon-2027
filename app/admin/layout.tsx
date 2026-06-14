@@ -1,26 +1,21 @@
-import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import { AdminSidebar } from "@/components/admin/sidebar";
 
 export default async function AdminLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-    const session = await auth();
+  const session = await auth();
+  if (!session || session.user.role !== "admin") {
+    redirect("/");
+  }
 
-    if (!session || session.user?.role !== "admin") {
-        redirect("/dashboard");
-    }
-
-    return (
-        <div className="flex min-h-screen bg-neutral-950">
-            {/* Sidebar */}
-            <aside className="w-64 border-r border-white/10 bg-neutral-900/50">
-                {/* Admin sidebar content */}
-            </aside>
-            <main className="flex-1 p-8">
-                {children}
-            </main>
-        </div>
-    );
+  return (
+    <div className="flex min-h-screen bg-[#0a0a0a] text-white">
+      <AdminSidebar />
+      <main className="flex-1 overflow-auto p-6 lg:p-10 ml-72">{children}</main>
+    </div>
+  );
 }
