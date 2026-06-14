@@ -5,7 +5,20 @@ import { syncUserToSheet } from "@/lib/sheets-sync";
 
 export async function POST(req: Request) {
   try {
-    const { email, password, name, phone } = await req.json();
+    const body = await req.json();
+    
+    // Нормализуем входные данные
+    const email = (body.email || "").toLowerCase().trim();
+    const password = body.password || "";
+    const name = body.name || "";
+    const phone = body.phone || "";
+
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: "Email and password are required" },
+        { status: 400 }
+      );
+    }
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
@@ -20,7 +33,10 @@ export async function POST(req: Request) {
       data: { email, password: hashed, name, phone },
     });
 
-    syncUserToSheet(user).catch(console.error);
+    // Не блокируем ответ если Sheets упал
+    syncUserToSheet(user).catch((err) => {
+      console.error("[Google Sheets] User sync failed:", err);
+    });
 
     return NextResponse.json({ success: true, userId: user.id }, { status: 201 });
   } catch (e) {
