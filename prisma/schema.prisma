@@ -267,3 +267,8 @@ model ContactMessage {
   message   String
   createdAt DateTime @default(now())
 }
+'@ | Set-Content prisma/schema.prisma -Encoding UTF8
+
+git add prisma/schema.prisma
+git commit -m "fix: clean schema.prisma with single datasource - URGENT"
+git push origin main --force-with-lease
