@@ -1,27 +1,17 @@
-﻿// middleware.ts
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
 
-const secret = new TextEncoder().encode(process.env.AUTH_SECRET);
-
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Только /admin защищаем - проверяем наличие session cookie
   if (pathname.startsWith("/admin")) {
-    const token = request.cookies.get("__Secure-authjs.session-token")?.value
-      || request.cookies.get("authjs.session-token")?.value;
+    const hasSession = 
+      request.cookies.has("__Secure-authjs.session-token") ||
+      request.cookies.has("authjs.session-token") ||
+      request.cookies.has("next-auth.session-token");
 
-    if (!token) {
-      return NextResponse.redirect(new URL("/account", request.url));
-    }
-
-    try {
-      const { payload } = await jwtVerify(token, secret);
-      if (payload.role !== "admin") {
-        return NextResponse.redirect(new URL("/dashboard", request.url));
-      }
-    } catch {
+    if (!hasSession) {
       return NextResponse.redirect(new URL("/account", request.url));
     }
   }
