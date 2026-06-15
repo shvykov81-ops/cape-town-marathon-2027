@@ -1,10 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, MessageCircle } from "lucide-react";
 import { KineticSectionTitle } from "@/components/effects/kinetic-section-title";
 import { AmbientGlow } from "@/components/effects/ambient-background";
-import { MagneticButton } from "@/components/effects/interactive-elements";
+import { TelegramButton } from "@/components/telegram-button";
 
 export function ContactHero() {
   const scrollToForm = () => {
@@ -12,55 +12,51 @@ export function ContactHero() {
   };
 
   return (
-    <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden">
-      <AmbientGlow 
-        primaryColor="rgba(20, 184, 166, 0.4)" 
-        secondaryColor="rgba(245, 158, 11, 0.3)" 
-      />
+    <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
+      <AmbientGlow className="opacity-40" />
 
-      <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
+      <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
         >
-          <KineticSectionTitle 
-            title="GET IN TOUCH"
-            description="We're here to help you run your best race"
-            className="mb-8"
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#229ED9]/10 border border-[#229ED9]/20 text-[#229ED9] text-sm font-medium mb-6">
+            <MessageCircle size={16} />
+            All Communication via Telegram
+          </div>
+
+          <KineticSectionTitle
+            title="Get in Touch"
+            className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6"
           />
-        </motion.div>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.6 }}
-          className="text-neutral-400 text-lg md:text-xl max-w-2xl mx-auto mb-12"
-        >
-          Questions about prep camps, trainers, or the marathon? 
-          Reach out and our team will respond within 24 hours.
-        </motion.p>
+          <p className="text-lg sm:text-xl text-neutral-400 max-w-2xl mx-auto mb-8">
+            Questions about prep camps, trainers, or the marathon? 
+            Join our Telegram for instant replies or fill out the form below.
+          </p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8, duration: 0.6 }}
-        >
-          <MagneticButton 
-            onClick={scrollToForm}
-            className="bg-gradient-to-r from-teal-500 to-teal-400 text-black font-semibold px-8 py-4 rounded-2xl"
-          >
-            Start Conversation
-          </MagneticButton>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <TelegramButton variant="primary" size="lg" label="Join Telegram" />
+            <motion.button
+              onClick={scrollToForm}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-500 transition-colors"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Send a Message
+              <ChevronDown className="w-4 h-4" />
+            </motion.button>
+          </div>
         </motion.div>
       </div>
 
-      <motion.div 
+      <motion.div
         className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        animate={{ y: [0, 10, 0] }}
-        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+        animate={{ y: [0, 8, 0] }}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
       >
-        <ChevronDown className="w-6 h-6 text-teal-400" />
+        <ChevronDown className="w-6 h-6 text-neutral-500" />
       </motion.div>
     </section>
   );

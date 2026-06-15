@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ContactHero } from "./sections/contact-hero";
+import { TelegramCtaSection } from "./sections/telegram-cta-section";
 import { ContactFormSection } from "./sections/contact-form-section";
 import { QuickContactCards } from "./sections/quick-contact-cards";
 import { FaqSection } from "./sections/faq-section";
@@ -7,11 +8,11 @@ import { MapSection } from "./sections/map-section";
 
 export const metadata: Metadata = {
   title: "Contact Us | Cape Town Marathon 2027",
-  description: "Get in touch with the Cape Town Marathon 2027 team. Book prep camps, connect with trainers, or ask questions about Africa's first Abbott World Marathon Majors candidate event.",
-  keywords: ["Cape Town Marathon", "contact", "prep camp", "trainer", "Abbott World Marathon Majors", "South Africa", "running", "support"],
+  description: "Get in touch with the Cape Town Marathon 2027 team via Telegram. Book prep camps, connect with trainers, or ask questions about Africa's first Abbott World Marathon Majors candidate event.",
+  keywords: ["Cape Town Marathon", "contact", "Telegram", "prep camp", "trainer", "Abbott World Marathon Majors", "South Africa", "running", "support"],
   openGraph: {
     title: "Contact Cape Town Marathon 2027",
-    description: "Reach out for prep camp bookings, trainer inquiries, and event information.",
+    description: "Reach out via Telegram for prep camp bookings, trainer inquiries, and event information.",
     type: "website",
     locale: "en_ZA",
     siteName: "Cape Town Marathon 2027",
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Contact Cape Town Marathon 2027",
-    description: "Get in touch with our team for prep camp and trainer bookings."
+    description: "Get in touch with our team via Telegram for prep camp and trainer bookings."
   },
   alternates: {
     canonical: "https://capetownmarathon2027.com/contact"
@@ -46,8 +47,10 @@ const contactSchema = {
   "mainEntity": {
     "@type": "Organization",
     "name": "Cape Town Marathon 2027",
-    "email": "info@cape-town-marathon.com",
     "url": "https://capetownmarathon2027.com",
+    "sameAs": [
+      "https://t.me/capetownmarathon2027"
+    ],
     "location": {
       "@type": "Place",
       "name": "Green Point Stadium",
@@ -67,13 +70,12 @@ export default function ContactPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(contactSchema) }}
       />
-      <main className="relative">
-        <ContactHero />
-        <ContactFormSection />
-        <QuickContactCards />
-        <FaqSection />
-        <MapSection />
-      </main>
+      <ContactHero />
+      <TelegramCtaSection />
+      <QuickContactCards />
+      <ContactFormSection />
+      <FaqSection />
+      <MapSection />
     </>
   );
 }
