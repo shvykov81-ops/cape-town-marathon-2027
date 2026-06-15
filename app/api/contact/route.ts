@@ -1,53 +1,80 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
+import { contactFormSchema } from "@/lib/validations/contact";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { sendContactNotification } from "@/lib/telegram";
+import { prisma } from "@/lib/prisma";
 
-const SPLITFORMS_ENDPOINT = "https://splitforms.com/api/submit";
-const ACCESS_KEY = "6db59e302b064cc5a72fd0b167e2e93a";
-
-export async function POST(request: NextRequest) {
-    try {
-        const { name, email, subject, message } = await request.json();
-
-        if (!name || !email || !email.includes('@') || !message) {
-            return NextResponse.json(
-                { error: 'Name, valid email, and message are required' },
-                { status: 400 }
-            );
-        }
-
-        const params = new URLSearchParams();
-        params.append('access_key', ACCESS_KEY);
-        params.append('subject', `Contact: ${subject || 'General Inquiry'} -- Cape Town Marathon 2027`);
-        params.append('name', name);
-        params.append('email', email);
-        params.append('message', message);
-        params.append('phone', '');
-        params.append('package', subject || 'General');
-        params.append('target time', 'N/A');
-
-        const response = await fetch(SPLITFORMS_ENDPOINT, {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: params.toString(),
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('SplitForms error:', errorText);
-            throw new Error('Failed to submit to SplitForms');
-        }
-
-        return NextResponse.json(
-            { message: 'Message sent successfully!' },
-            { status: 200 }
-        );
-    } catch (error) {
-        console.error('Contact error:', error);
-        return NextResponse.json(
-            { error: 'Failed to send message. Please try again later.' },
-            { status: 500 }
-        );
+export async function POST(req: NextRequest) {
+  try {
+    // Rate limiting
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
+    if (!checkRateLimit(ip, 5)) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again in a minute." },
+        { status: 429 }
+      );
     }
+
+    const body = await req.json();
+
+    // Honeypot check
+    if (body.website && body.website.length > 0) {
+      return NextResponse.json({ success: true }, { status: 200 }); // Fake success
+    }
+
+    // Validation
+    const result = contactFormSchema.safeParse(body);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: result.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const { name, email, phone, subject, message } = result.data;
+
+    // Save to database
+    const contactMessage = await prisma.contactMessage.create({
+      data: {
+        name,
+        email,
+        phone: phone || null,
+        subject,
+        message,
+        ipAddress: ip,
+        userAgent: req.headers.get("user-agent") || undefined,
+        source: "contact_page"
+      }
+    });
+
+    // Send Telegram notification (async, non-blocking)
+    sendContactNotification({
+      name,
+      email,
+      phone: phone || null,
+      subject,
+      message,
+      createdAt: contactMessage.createdAt
+    }).then((sent) => {
+      if (sent) {
+        prisma.contactMessage.update({
+          where: { id: contactMessage.id },
+          data: { telegramSent: true }
+        }).catch(console.error);
+      }
+    }).catch(console.error);
+
+    return NextResponse.json({
+      success: true,
+      messageId: contactMessage.id,
+      message: "Thank you! We'll get back to you within 24 hours."
+    });
+
+  } catch (error) {
+    console.error("Contact form error:", error);
+    return NextResponse.json(
+      { error: "Something went wrong. Please try again later." },
+      { status: 500 }
+    );
+  }
 }
