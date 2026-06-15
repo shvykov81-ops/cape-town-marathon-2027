@@ -62,6 +62,49 @@ ${escapeHtml(contact.message)}
   return sendTelegramMessage(ADMIN_GROUP_ID, text);
 }
 
+export async function sendBookingNotification(booking: {
+  id: string;
+  status: string;
+  checkInDate: Date;
+  checkOutDate: Date;
+  guestsCount: number;
+  totalPrice: number | Decimal;
+  trainer?: { firstName: string; lastName: string } | null;
+  package?: { name: string };
+}, user: {
+  name?: string | null;
+  email: string;
+  phone?: string | null;
+}): Promise<boolean> {
+  if (!ADMIN_GROUP_ID) return false;
+
+  const trainerName = booking.trainer
+    ? `${booking.trainer.firstName} ${booking.trainer.lastName}`
+    : "Not selected";
+
+  const packageName = booking.package?.name || "Unknown package";
+  const userName = user.name || user.email;
+
+  const text = `🏃‍♂️ <b>New Booking!</b>
+
+👤 <b>User:</b> ${escapeHtml(userName)}
+📧 <b>Email:</b> ${escapeHtml(user.email)}
+📱 <b>Phone:</b> ${user.phone ? escapeHtml(user.phone) : "Not provided"}
+
+📦 <b>Package:</b> ${escapeHtml(packageName)}
+👨‍🏫 <b>Trainer:</b> ${escapeHtml(trainerName)}
+📅 <b>Dates:</b> ${formatDate(booking.checkInDate)} — ${formatDate(booking.checkOutDate)}
+👥 <b>Guests:</b> ${booking.guestsCount}
+💰 <b>Total:</b> $${booking.totalPrice}
+⏳ <b>Status:</b> ${booking.status}
+
+🔗 <b>Booking ID:</b> <code>${booking.id}</code>
+
+📝 <b>Action:</b> Review in admin panel`;
+
+  return sendTelegramMessage(ADMIN_GROUP_ID, text);
+}
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")
@@ -69,3 +112,13 @@ function escapeHtml(text: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("en-ZA", {
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  });
+}
+
+type Decimal = { toString(): string };

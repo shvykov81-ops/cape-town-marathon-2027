@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { getAuthUser } from "@/lib/auth-helper";
 import { prisma } from "@/lib/prisma";
 import { syncBookingToSheet } from "@/lib/sheets-sync";
+import { sendBookingNotification } from "@/lib/telegram";
 import { z } from "zod";
 
 const bookingSchema = z.object({
@@ -105,29 +106,37 @@ export async function POST(req: NextRequest) {
       },
     });
 
-      let userWithPhone = user;
-      if (phone) {
-          await prisma.user.update({
-              where: { id: user.id },
-              data: { phone },
-          });
-          const freshUser = await prisma.user.findUniqueOrThrow({
-              where: { id: user.id },
-              select: {
-                  id: true,
-                  email: true,
-                  name: true,
-                  phone: true,
-                  role: true,
-              },
-          });
-          userWithPhone = {
-              ...freshUser,
-              role: freshUser.role as "user" | "admin",
-          };
-      }
+    let userWithPhone = user;
+    if (phone) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { phone },
+      });
+      const freshUser = await prisma.user.findUniqueOrThrow({
+        where: { id: user.id },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          phone: true,
+          role: true,
+        },
+      });
+      userWithPhone = {
+        ...freshUser,
+        role: freshUser.role as "user" | "admin",
+      };
+    }
 
+    // Sync to Google Sheets (non-blocking)
     syncBookingToSheet(booking, userWithPhone).catch(console.error);
+
+    // Send Telegram notification to admin group (non-blocking)
+    sendBookingNotification(booking, {
+      name: userWithPhone.name,
+      email: userWithPhone.email,
+      phone: userWithPhone.phone,
+    }).catch(console.error);
 
     return NextResponse.json({ success: true, bookingId: booking.id });
   } catch (e) {
