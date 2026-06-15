@@ -132,9 +132,10 @@ export async function POST(req: NextRequest) {
     syncBookingToSheet(booking, userWithPhone).catch(console.error);
 
     // Send Telegram notification to admin group (non-blocking)
+    const userEmail = userWithPhone.email || "no-email@unknown.com";
     sendBookingNotification(booking, {
       name: userWithPhone.name,
-      email: userWithPhone.email,
+      email: userEmail,
       phone: userWithPhone.phone,
     }).catch(console.error);
 
