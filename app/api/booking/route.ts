@@ -133,10 +133,11 @@ export async function POST(req: NextRequest) {
 
     // Send Telegram notification to admin group (non-blocking)
     const userEmail = userWithPhone.email || "no-email@unknown.com";
+    const userPhone = (userWithPhone as any).phone || null;
     sendBookingNotification(booking, {
       name: userWithPhone.name,
       email: userEmail,
-      phone: userWithPhone.phone,
+      phone: userPhone,
     }).catch(console.error);
 
     return NextResponse.json({ success: true, bookingId: booking.id });
