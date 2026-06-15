@@ -1,9 +1,17 @@
 import { google } from "googleapis";
 
+function getPrivateKey(): string | undefined {
+  const key = process.env.GOOGLE_PRIVATE_KEY;
+  if (!key) return undefined;
+
+  // Handle both escaped newlines (from .env file) and real newlines (from Vercel UI)
+  return key.replace(/\\n/g, "\n").replace(/\n/g, "\n");
+}
+
 const auth = new google.auth.GoogleAuth({
   credentials: {
     client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+    private_key: getPrivateKey(),
   },
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
