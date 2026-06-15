@@ -7,9 +7,9 @@ import { sendTelegramMessage } from "@/lib/telegram";
 const telegramUpdateSchema = z.object({
   message: z.object({
     chat: z.object({ id: z.number() }),
-    text: z.string(),
-    from: z.object({ 
-      id: z.number(), 
+    text: z.string().optional(),
+    from: z.object({
+      id: z.number(),
       first_name: z.string(),
       username: z.string().optional()
     })
@@ -18,28 +18,51 @@ const telegramUpdateSchema = z.object({
     message: z.object({
       chat: z.object({ id: z.number() })
     }).optional(),
-    data: z.string().optional()
+    data: z.string().optional(),
+    from: z.object({
+      id: z.number(),
+      first_name: z.string()
+    })
   }).optional()
 });
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+
+    // Validate secret token if configured
+    const secretToken = req.headers.get("x-telegram-bot-api-secret-token");
+    const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+
+    if (expectedSecret && secretToken !== expectedSecret) {
+      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     const parsed = telegramUpdateSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ ok: false }, { status: 400 });
+      console.error("Webhook validation failed:", parsed.error.flatten());
+      return NextResponse.json({ ok: false, error: "Invalid format" }, { status: 400 });
     }
 
-    // Handle commands and messages
+    // Handle callback queries
+    if (parsed.data.callback_query) {
+      return NextResponse.json({ ok: true });
+    }
+
+    // Handle messages
     const message = parsed.data.message;
     if (!message) {
       return NextResponse.json({ ok: true });
     }
 
     const chatId = message.chat.id.toString();
-    const text = message.text.trim();
+    const text = (message.text || "").trim();
     const from = message.from;
+
+    if (!text) {
+      return NextResponse.json({ ok: true });
+    }
 
     // Log incoming message
     await prisma.telegramLog.create({
@@ -53,7 +76,7 @@ export async function POST(req: NextRequest) {
 
     // Handle commands
     if (text.startsWith("/")) {
-      const command = text.toLowerCase();
+      const command = text.toLowerCase().split(" ")[0];
       let response = "";
 
       switch (command) {
@@ -99,7 +122,7 @@ export async function POST(req: NextRequest) {
         case "/contact":
           response = `📞 Contact us:\n\n` +
             `• Website: capetownmarathon2027.com/contact\n` +
-            `• Email: info@cape-town-marathon.com\n` +
+            `• Telegram: Join our group for community support\n` +
             `• This bot: ask anything!\n\n` +
             `Response time: within 24 hours`;
           break;
@@ -140,7 +163,7 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     console.error("Telegram webhook error:", error);
-    return NextResponse.json({ ok: false }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "Internal error" }, { status: 500 });
   }
 }
 
