@@ -79,16 +79,10 @@
 
   body {
     @apply antialiased bg-neutral-950 text-white;
-    cursor: none;
   }
 
   * {
     @apply border-border outline-ring/50;
-  }
-
-  /* Custom cursor on interactive elements */
-  a, button, [role="button"] {
-    cursor: none;
   }
 }
 
@@ -162,12 +156,6 @@
     transform-style: preserve-3d;
   }
 
-  /* Trail cursor canvas */
-  .trail-canvas {
-    mix-blend-mode: screen;
-    pointer-events: none;
-  }
-
   /* Preloader z-index */
   .preloader-overlay {
     z-index: 100;
@@ -218,29 +206,7 @@
   }
 }
 
-/* Hide default cursor on desktop when trail cursor is active */
-@media (hover: hover) and (pointer: fine) {
-  body {
-    cursor: none;
-  }
-  a,
-  button,
-  [role="button"] {
-    cursor: none;
-  }
-}
-
 /* Canvas display fix */
 canvas {
   display: block;
-}
-
-/* Custom cursor styles */
-.custom-cursor {
-  pointer-events: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 9999;
-  mix-blend-mode: difference;
 }
