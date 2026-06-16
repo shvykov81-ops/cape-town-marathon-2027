@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth-helper";
 import { prisma } from "@/lib/prisma";
+import { documentSchema } from "@/lib/validations/document";
 
 export async function GET(req: NextRequest) {
   const user = await getAuthUser(req);
@@ -23,10 +23,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { name, type, url } = await req.json();
-  const document = await prisma.document.create({
-    data: { userId: user.id, name, type, url },
-  });
+  try {
+    const body = await req.json();
+    const parsed = documentSchema.safeParse(body);
 
-  return NextResponse.json(document);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const { name, type, url } = parsed.data;
+
+    const document = await prisma.document.create({
+      data: { userId: user.id, name, type, url },
+    });
+
+    return NextResponse.json(document, { status: 201 });
+  } catch (error) {
+    console.error("Document create error:", error);
+    return NextResponse.json({ error: "Failed to create document" }, { status: 500 });
+  }
 }
