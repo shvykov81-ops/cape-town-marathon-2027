@@ -56,9 +56,10 @@ export function MagneticButton({
 interface TiltCardProps {
   children: React.ReactNode;
   className?: string;
+  tiltAmount?: number;
 }
 
-export function TiltCard({ children, className = "" }: TiltCardProps) {
+export function TiltCard({ children, className = "", tiltAmount = 10 }: TiltCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [rotateX, setRotateX] = useState(0);
   const [rotateY, setRotateY] = useState(0);
@@ -69,8 +70,8 @@ export function TiltCard({ children, className = "" }: TiltCardProps) {
     const rect = ref.current.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width;
     const y = (e.clientY - rect.top) / rect.height;
-    setRotateX((y - 0.5) * -10);
-    setRotateY((x - 0.5) * 10);
+    setRotateX((y - 0.5) * -tiltAmount);
+    setRotateY((x - 0.5) * tiltAmount);
     setGlarePosition({ x: x * 100, y: y * 100 });
   };
 
