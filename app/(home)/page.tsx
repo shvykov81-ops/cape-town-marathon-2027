@@ -6,6 +6,7 @@ import { TrainersTeaser } from "@/components/effects/trainers-teaser";
 import { PrepCampTeaser } from "./prep-camp-teaser";
 import { RouteVisualization } from "@/components/effects/route-visualization-v2";
 import { NewsletterSection } from "./newsletter-section";
+import { MagneticCursor } from "@/components/effects/magnetic-cursor";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,7 @@ export default function HomePage() {
   return (
     <>
       <Preloader />
+      <MagneticCursor />
 
       {/* Hero: WebGL grain + kinetic text + video scrub */}
       <HeroSection />

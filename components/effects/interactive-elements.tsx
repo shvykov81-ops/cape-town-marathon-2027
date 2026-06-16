@@ -1,1 +1,107 @@
-"use client";import{useRef,useState,useEffect,useCallback}from"react";import{motion,useMotionValue,useSpring}from"framer-motion";export function MagneticButton({children,className="",strength=0.4,onClick,}:{children:React.ReactNode;className?:string;strength?:number;onClick?:()=>void;}){const ref=useRef<HTMLButtonElement>(null),x=useMotionValue(0),y=useMotionValue(0),springX=useSpring(x,{stiffness:150,damping:15,mass:0.1}),springY=useSpring(y,{stiffness:150,damping:15,mass:0.1});const handleMouseMove=(e:React.MouseEvent)=>{if(!ref.current)return;const rect=ref.current.getBoundingClientRect();x.set((e.clientX-(rect.left+rect.width/2))*strength);y.set((e.clientY-(rect.top+rect.height/2))*strength);};const handleMouseLeave=()=>{x.set(0);y.set(0);};return<motion.button ref={ref}style={{x:springX,y:springY}}onMouseMove={handleMouseMove}onMouseLeave={handleMouseLeave}onClick={onClick}className={`relative overflow-hidden group ${className}`}whileTap={{scale:0.96}}><span className="relative z-10">{children}</span><motion.div className="absolute inset-0 bg-gradient-to-r from-teal-500 to-teal-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"initial={false}/></motion.button>;}interface Point{x:number;y:number;age:number;}export function TrailCursor(){const canvasRef=useRef<HTMLCanvasElement>(null),pointsRef=useRef<Point[]>([]),rafRef=useRef<number>(0),[isTouch,setIsTouch]=useState(false);useEffect(()=>{setIsTouch("ontouchstart"in window);},[]);useEffect(()=>{if(isTouch)return;const canvas=canvasRef.current;if(!canvas)return;const ctx=canvas.getContext("2d")!;let w=0,h=0;const resize=()=>{w=window.innerWidth;h=window.innerHeight;canvas.width=w*window.devicePixelRatio;canvas.height=h*window.devicePixelRatio;ctx.scale(window.devicePixelRatio,window.devicePixelRatio);};resize();window.addEventListener("resize",resize);const handleMouseMove=(e:MouseEvent)=>{pointsRef.current.push({x:e.clientX,y:e.clientY,age:0});if(pointsRef.current.length>30)pointsRef.current.shift();};window.addEventListener("mousemove",handleMouseMove);const render=()=>{ctx.clearRect(0,0,w,h);const points=pointsRef.current;if(points.length<2){rafRef.current=requestAnimationFrame(render);return;}for(let i=points.length-1;i>=0;i--){points[i].age+=1;if(points[i].age>40)points.splice(i,1);}for(let i=1;i<points.length;i++){const p1=points[i-1],p2=points[i],progress=i/points.length,alpha=(1-p2.age/40)*progress*0.6,size=3+progress*5,hue=170-progress*40;ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.strokeStyle=`hsla(${hue},80%,55%,${alpha})`;ctx.lineWidth=size;ctx.lineCap="round";ctx.stroke();ctx.beginPath();ctx.arc(p2.x,p2.y,size*0.5,0,Math.PI*2);ctx.fillStyle=`hsla(${hue},80%,60%,${alpha*1.5})`;ctx.fill();}rafRef.current=requestAnimationFrame(render);};render();return()=>{cancelAnimationFrame(rafRef.current);window.removeEventListener("resize",resize);window.removeEventListener("mousemove",handleMouseMove);};},[isTouch]);if(isTouch)return null;return<canvas ref={canvasRef}className="fixed inset-0 pointer-events-none z-[9999]"style={{mixBlendMode:"screen"}}/>;}export function TiltCard({children,className="",tiltAmount=10,glareOpacity=0.15,}:{children:React.ReactNode;className?:string;tiltAmount?:number;glareOpacity?:number;}){const ref=useRef<HTMLDivElement>(null),[transform,setTransform]=useState("perspective(1000px) rotateX(0deg) rotateY(0deg)"),[glarePos,setGlarePos]=useState({x:50,y:50});const handleMouseMove=useCallback((e:React.MouseEvent)=>{if(!ref.current)return;const rect=ref.current.getBoundingClientRect();const x=(e.clientX-rect.left)/rect.width,y=(e.clientY-rect.top)/rect.height;setTransform(`perspective(1000px) rotateX(${(0.5-y)*tiltAmount*2}deg) rotateY(${(x-0.5)*tiltAmount*2}deg) scale3d(1.02,1.02,1.02)`);setGlarePos({x:x*100,y:y*100});},[tiltAmount]);const handleMouseLeave=()=>{setTransform("perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1,1,1)");setGlarePos({x:50,y:50});};return<div ref={ref}className={`relative transition-transform duration-100 ease-out ${className}`}style={{transform,transformStyle:"preserve-3d"}}onMouseMove={handleMouseMove}onMouseLeave={handleMouseLeave}>{children}<div className="absolute inset-0 pointer-events-none"style={{background:`radial-gradient(circle at ${glarePos.x}% ${glarePos.y}%,rgba(255,255,255,${glareOpacity}),transparent 60%)`,borderRadius:"inherit"}}/></div>;}
+"use client";
+
+import { useRef, useState } from "react";
+import { motion, useMotionValue, useSpring } from "framer-motion";
+
+// ─── Magnetic Button ─────────────────────────────────────────────
+
+interface MagneticButtonProps {
+  children: React.ReactNode;
+  className?: string;
+  strength?: number;
+}
+
+export function MagneticButton({
+  children,
+  className = "",
+  strength = 0.4,
+}: MagneticButtonProps) {
+  const ref = useRef<HTMLButtonElement>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const springConfig = { stiffness: 150, damping: 15 };
+  const springX = useSpring(x, springConfig);
+  const springY = useSpring(y, springConfig);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    x.set((e.clientX - centerX) * strength);
+    y.set((e.clientY - centerY) * strength);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <motion.button
+      ref={ref}
+      style={{ x: springX, y: springY }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className={className}
+    >
+      {children}
+    </motion.button>
+  );
+}
+
+// ─── 3D Tilt Card ────────────────────────────────────────────────
+
+interface TiltCardProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function TiltCard({ children, className = "" }: TiltCardProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [rotateX, setRotateX] = useState(0);
+  const [rotateY, setRotateY] = useState(0);
+  const [glarePosition, setGlarePosition] = useState({ x: 50, y: 50 });
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    setRotateX((y - 0.5) * -10);
+    setRotateY((x - 0.5) * 10);
+    setGlarePosition({ x: x * 100, y: y * 100 });
+  };
+
+  const handleMouseLeave = () => {
+    setRotateX(0);
+    setRotateY(0);
+    setGlarePosition({ x: 50, y: 50 });
+  };
+
+  return (
+    <div
+      ref={ref}
+      className={`tilt-perspective ${className}`}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div
+        style={{
+          transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
+          transition: "transform 0.1s ease-out",
+        }}
+        className="relative overflow-hidden"
+      >
+        {children}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-0 hover:opacity-100 transition-opacity duration-300"
+          style={{
+            background: `radial-gradient(circle at ${glarePosition.x}% ${glarePosition.y}%, rgba(255,255,255,0.15) 0%, transparent 50%)`,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
