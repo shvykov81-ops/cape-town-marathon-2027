@@ -1,7 +1,5 @@
-// app/(home)/page.tsx — Variant A: GlassmorphismFeatureCard replaces StatsSection
 import { Suspense } from "react";
 import { Preloader } from "@/components/effects/preloader";
-import { TrailCursor } from "@/components/effects/interactive-elements";
 import { HeroSection } from "@/components/effects/hero-section-v2";
 import { GlassmorphismFeatureCard } from "@/components/effects/glassmorphism-feature-card";
 import { TrainersTeaser } from "@/components/effects/trainers-teaser";
@@ -15,7 +13,6 @@ export default function HomePage() {
   return (
     <>
       <Preloader />
-      <TrailCursor />
 
       {/* Hero: WebGL grain + kinetic text + video scrub */}
       <HeroSection />
