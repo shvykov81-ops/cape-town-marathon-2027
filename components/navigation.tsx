@@ -14,14 +14,12 @@ export function Navigation() {
     const t = useTranslations("navigation");
 
     const navLinks = [
-        { href: `/${locale}`, label: t("home") },
         { href: `/${locale}/about-race`, label: t("about") },
         { href: `/${locale}/prep-camp`, label: t("prepCamp") },
         { href: `/${locale}/race-week`, label: t("raceWeek") },
         { href: `/${locale}/cape-town-guide`, label: t("capeTownGuide") },
         { href: `/${locale}/trainers`, label: t("trainers") },
         { href: `/${locale}/pricing`, label: t("pricing") },
-        { href: `/${locale}/contact`, label: t("contact") },
         { href: `/${locale}/blog`, label: t("blog") },
     ];
 
