@@ -1,17 +1,11 @@
+const withNextIntl = require("next-intl/plugin")("./i18n/request.ts");
+
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig = withNextIntl({
   images: {
     unoptimized: true,
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "**",
-      },
-    ],
   },
-  env: {
-    NEXT_PUBLIC_TELEGRAM_GROUP_URL: process.env.NEXT_PUBLIC_TELEGRAM_GROUP_URL,
-  },
-};
+  // Add any existing config here
+});
 
 module.exports = nextConfig;

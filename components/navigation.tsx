@@ -2,114 +2,112 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Mountain } from "lucide-react";
-
-const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/about-race", label: "About the Race" },
-  { href: "/prep-camp", label: "Prep Camp" },
-  { href: "/race-week", label: "Race Week" },
-  { href: "/cape-town-guide", label: "Cape Town Guide" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/blog", label: "Blog" },
-  { href: "/contact", label: "Contact" },
-];
+import { usePathname } from "next/navigation";
+import { useTranslations, useLocale } from "next-intl";
+import { Menu, X, User } from "lucide-react";
+import { LocaleSwitcher } from "./locale-switcher";
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+  const locale = useLocale();
+  const t = useTranslations("navigation");
+
+  const navLinks = [
+    { href: `/${locale}`, label: t("home") },
+    { href: `/${locale}/about-race`, label: t("about") },
+    { href: `/${locale}/trainers`, label: t("trainers") },
+    { href: `/${locale}/pricing`, label: t("pricing") },
+    { href: `/${locale}/contact`, label: t("contact") },
+    { href: `/${locale}/blog`, label: t("blog") },
+  ];
+
+  const isActive = (href: string) => pathname === href;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-neutral-950/80 backdrop-blur-md border-b border-white/10">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-neutral-950/80 backdrop-blur-xl border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-20">
+        <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <Mountain className="w-8 h-8 text-teal-400 group-hover:text-teal-300 transition-colors" />
-            <span className="text-xl font-bold tracking-tight">
-              Cape Town <span className="text-teal-400">Marathon</span>
-            </span>
+          <Link href={`/${locale}`} className="flex items-center gap-2">
+            <span className="text-xl font-bold gradient-text">RUN & Travel</span>
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="px-3 py-2 text-sm text-neutral-300 hover:text-white rounded-md hover:bg-white/5 transition-all"
+                className={`text-sm font-medium transition-colors ${
+                  isActive(link.href)
+                    ? "text-teal-400"
+                    : "text-neutral-400 hover:text-white"
+                }`}
               >
                 {link.label}
               </Link>
             ))}
-          </nav>
-
-          {/* CTA Buttons */}
-          <div className="hidden lg:flex items-center gap-3">
+            <LocaleSwitcher />
             <Link
-              href="/account"
-              className="text-sm text-neutral-300 hover:text-white transition-colors"
+              href={`/${locale}/booking`}
+              className="px-4 py-2 bg-teal-500 text-neutral-950 font-semibold text-sm rounded-full hover:bg-teal-400 transition-colors"
             >
-              My Account
+              {t("booking")}
             </Link>
             <Link
-              href="/booking"
-              className="px-5 py-2.5 bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold rounded-full transition-all hover:scale-105"
+              href={`/${locale}/account`}
+              className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
             >
-              Book Now
+              <User className="w-5 h-5 text-neutral-300" />
             </Link>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile menu button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="lg:hidden p-2 text-white"
+            className="md:hidden p-2 rounded-lg bg-white/5"
           >
-            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isOpen ? (
+              <X className="w-5 h-5 text-white" />
+            ) : (
+              <Menu className="w-5 h-5 text-white" />
+            )}
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-neutral-950 border-b border-white/10"
-          >
-            <nav className="px-4 py-4 space-y-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setIsOpen(false)}
-                  className="block px-3 py-3 text-neutral-300 hover:text-white hover:bg-white/5 rounded-md transition-all"
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <div className="pt-4 border-t border-white/10 space-y-2">
-                <Link
-                  href="/account"
-                  onClick={() => setIsOpen(false)}
-                  className="block px-3 py-3 text-neutral-300 hover:text-white"
-                >
-                  My Account
-                </Link>
-                <Link
-                  href="/booking"
-                  onClick={() => setIsOpen(false)}
-                  className="block px-3 py-3 bg-teal-600 text-white text-center rounded-full font-semibold"
-                >
-                  Book Now
-                </Link>
-              </div>
-            </nav>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </header>
+      {/* Mobile menu */}
+      {isOpen && (
+        <div className="md:hidden bg-neutral-950/95 backdrop-blur-xl border-b border-white/5">
+          <div className="px-4 py-4 space-y-2">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setIsOpen(false)}
+                className={`block px-4 py-2 rounded-lg text-sm font-medium ${
+                  isActive(link.href)
+                    ? "bg-teal-500/10 text-teal-400"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+            <div className="px-4 py-2">
+              <LocaleSwitcher />
+            </div>
+            <Link
+              href={`/${locale}/booking`}
+              onClick={() => setIsOpen(false)}
+              className="block px-4 py-2 bg-teal-500 text-neutral-950 font-semibold text-sm rounded-full text-center"
+            >
+              {t("booking")}
+            </Link>
+          </div>
+        </div>
+      )}
+    </nav>
   );
 }
