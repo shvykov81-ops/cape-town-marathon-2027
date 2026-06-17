@@ -14,7 +14,6 @@ export function Navigation() {
     const t = useTranslations("navigation");
 
     const navLinks = [
-        { href: `/${locale}`, label: t("home") },
         { href: `/${locale}/about-race`, label: t("about") },
         { href: `/${locale}/prep-camp`, label: t("prepCamp") },
         { href: `/${locale}/race-week`, label: t("raceWeek") },
