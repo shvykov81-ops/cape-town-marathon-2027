@@ -21,7 +21,6 @@ export function Navigation() {
         { href: `/${locale}/cape-town-guide`, label: t("capeTownGuide") },
         { href: `/${locale}/trainers`, label: t("trainers") },
         { href: `/${locale}/pricing`, label: t("pricing") },
-        { href: `/${locale}/contact`, label: t("contact") },
         { href: `/${locale}/blog`, label: t("blog") },
     ];
 
