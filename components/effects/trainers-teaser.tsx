@@ -1,74 +1,74 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
-import { Star, ArrowRight, MapPin, Award } from "lucide-react";
+import { Star, MapPin, ArrowRight, User } from "lucide-react";
 import Link from "next/link";
-import { TiltCard } from "@/components/effects/interactive-elements";
+import Image from "next/image";
 
 interface Trainer {
   id: string;
   firstName: string;
   lastName: string;
-  photoUrl: string | null;
   bio: string;
-  specialties: string[];
-  languages: string[];
+  photoUrl: string | null;
   rating: number;
   reviewCount: number;
-  location: string | null;
+  specialties: string[];
+  languages: string[];
+  location?: string;
 }
 
 function TrainerCard({ trainer, index }: { trainer: Trainer; index: number }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
 
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 30 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ delay: index * 0.15, duration: 0.6, ease: "easeOut" }}
+      className="group relative"
     >
-      <TiltCard className="h-full" tiltAmount={6}>
-        <div className="bg-neutral-900/80 backdrop-blur-sm border border-neutral-800 rounded-2xl overflow-hidden hover:border-teal-500/50 transition-colors duration-300 h-full flex flex-col">
+      <Link href={`/trainers/${trainer.id}`} className="block">
+        <div className="glass-card rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/10 hover:border-teal-500/30">
           {/* Photo */}
           <div className="relative h-64 overflow-hidden">
             {trainer.photoUrl ? (
-              <img
+              <Image
                 src={trainer.photoUrl}
                 alt={`${trainer.firstName} ${trainer.lastName}`}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                unoptimized
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-teal-900/50 to-neutral-800 flex items-center justify-center">
-                <Award className="w-16 h-16 text-teal-500/30" />
+              <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
+                <User className="w-16 h-16 text-neutral-600" />
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-transparent to-transparent" />
 
             {/* Rating badge */}
-            <div className="absolute top-4 right-4 flex items-center gap-1 px-2 py-1 bg-neutral-900/80 backdrop-blur-sm rounded-full border border-amber-500/30">
-              <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-              <span className="text-xs font-bold text-amber-400">{trainer.rating.toFixed(1)}</span>
+            <div className="absolute top-4 right-4 flex items-center gap-1 px-3 py-1 rounded-full bg-black/60 backdrop-blur-sm text-white text-sm font-medium">
+              <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+              {trainer.rating.toFixed(1)}
             </div>
           </div>
 
           {/* Content */}
-          <div className="p-6 flex-1 flex flex-col">
+          <div className="p-6">
             <h3 className="text-xl font-bold text-white mb-1">
               {trainer.firstName} {trainer.lastName}
             </h3>
-
             {trainer.location && (
-              <div className="flex items-center gap-1 text-neutral-500 text-sm mb-3">
-                <MapPin className="w-3 h-3" />
-                <span>{trainer.location}</span>
+              <div className="flex items-center gap-1 text-neutral-400 text-sm mb-3">
+                <MapPin className="w-4 h-4" />
+                {trainer.location}
               </div>
             )}
 
-            <p className="text-neutral-400 text-sm line-clamp-2 mb-4 flex-1">
+            <p className="text-neutral-400 text-sm line-clamp-2 mb-4">
               {trainer.bio}
             </p>
 
@@ -77,7 +77,7 @@ function TrainerCard({ trainer, index }: { trainer: Trainer; index: number }) {
               {trainer.specialties.slice(0, 3).map((spec) => (
                 <span
                   key={spec}
-                  className="px-2 py-1 text-xs bg-teal-500/10 text-teal-400 rounded-full border border-teal-500/20"
+                  className="px-2 py-1 rounded-md bg-teal-500/10 text-teal-400 text-xs font-medium"
                 >
                   {spec}
                 </span>
@@ -85,12 +85,12 @@ function TrainerCard({ trainer, index }: { trainer: Trainer; index: number }) {
             </div>
 
             {/* Languages */}
-            <div className="text-xs text-neutral-600">
+            <div className="text-xs text-neutral-500">
               {trainer.languages.join(" · ")}
             </div>
           </div>
         </div>
-      </TiltCard>
+      </Link>
     </motion.div>
   );
 }
@@ -98,14 +98,13 @@ function TrainerCard({ trainer, index }: { trainer: Trainer; index: number }) {
 export function TrainersTeaser() {
   const [trainers, setTrainers] = useState<Trainer[]>([]);
   const [loading, setLoading] = useState(true);
-  const sectionRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
   useEffect(() => {
     fetch("/api/trainers")
       .then((res) => res.json())
       .then((data) => {
-        // Take top 4 trainers by rating
         const top = (data.trainers || [])
           .sort((a: Trainer, b: Trainer) => b.rating - a.rating)
           .slice(0, 4);
@@ -116,25 +115,24 @@ export function TrainersTeaser() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="relative py-32 overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-neutral-950 via-neutral-900 to-neutral-950" />
+    <section ref={sectionRef} className="relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <div className="absolute inset-0 bg-neutral-950" />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
-          className="text-center mb-16"
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
         >
-          <span className="text-teal-400 text-sm tracking-[0.3em] uppercase font-medium">
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-sm font-medium mb-6">
             World-Class Coaches
           </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-white mt-4 mb-6">
-            Train with the <span className="text-amber-400">Best</span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+            Train with the Best
           </h2>
-          <p className="text-neutral-400 max-w-2xl mx-auto text-lg">
+          <p className="text-lg text-neutral-400 max-w-2xl mx-auto">
             Certified marathon coaches who will prepare you for the ultimate
             challenge and guide you through Cape Town.
           </p>
@@ -142,16 +140,13 @@ export function TrainersTeaser() {
 
         {/* Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(4)].map((_, i) => (
-              <div
-                key={i}
-                className="h-96 bg-neutral-800/50 rounded-2xl animate-pulse"
-              />
+              <div key={i} className="glass-card rounded-2xl h-80 animate-pulse" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {trainers.map((trainer, i) => (
               <TrainerCard key={trainer.id} trainer={trainer} index={i} />
             ))}
@@ -160,17 +155,17 @@ export function TrainersTeaser() {
 
         {/* CTA */}
         <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.6, duration: 0.6 }}
           className="text-center mt-12"
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ delay: 0.6, duration: 0.8 }}
         >
           <Link
             href="/trainers"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-teal-500 hover:bg-teal-400 text-neutral-950 font-bold rounded-full transition-colors shadow-lg shadow-teal-500/25 group"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-teal-500 hover:bg-teal-400 text-neutral-950 font-bold rounded-full transition-colors shadow-lg shadow-teal-500/25"
           >
             View All Trainers
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className="w-5 h-5" />
           </Link>
         </motion.div>
       </div>

@@ -24,14 +24,14 @@ interface Package {
   name: string;
   description: string;
   durationDays: number;
-  priceBase: number;
+  priceBase: number; // NOTE: API may return string/Decimal — always use toNumber() helper
   type: string;
 }
 
 interface PackageOption {
   id: string;
   name: string;
-  priceAdd: number;
+  priceAdd: number; // NOTE: API may return string/Decimal — always use toNumber() helper
   category: string;
 }
 
@@ -55,6 +55,16 @@ const trustIndicators = [
   { icon: Lock, label: "Encrypted" },
   { icon: BadgeCheck, label: "Verified" },
 ];
+
+// ─── Helper: safely convert Prisma Decimal/string to number ──────────────
+function toNumber(value: unknown): number {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") return parseFloat(value) || 0;
+  if (value && typeof value === "object" && "toNumber" in value && typeof (value as Record<string, unknown>).toNumber === "function") {
+    return (value as { toNumber: () => number }).toNumber();
+  }
+  return 0;
+}
 
 export default function BookingPage() {
   const searchParams = useSearchParams();
@@ -102,11 +112,12 @@ export default function BookingPage() {
     }
   }, [selectedPkg]);
 
+  // ─── FIXED: Numeric total calculation ────────────────────────────────────
   const total =
-    (selectedPkg?.priceBase || 0) +
+    toNumber(selectedPkg?.priceBase) +
     selectedExtras.reduce((sum, id) => {
       const extra = options.find((o) => o.id === id);
-      return sum + (extra?.priceAdd || 0);
+      return sum + toNumber(extra?.priceAdd);
     }, 0);
 
   const handleSubmit = async () => {
@@ -164,7 +175,7 @@ export default function BookingPage() {
             <span className="gradient-text">Experience</span>
           </h1>
           <p className="text-neutral-400 max-w-xl mx-auto">
-            Secure your spot at Africa's first Abbott World Marathon Majors candidate event.
+            Secure your spot at Africa&apos;s first Abbott World Marathon Majors candidate event.
           </p>
         </motion.div>
 
@@ -270,7 +281,7 @@ export default function BookingPage() {
                             </div>
                             <div className="text-right">
                               <p className="text-2xl font-bold text-white">
-                                ${Number(pkg.priceBase).toLocaleString()}
+                                ${toNumber(pkg.priceBase).toLocaleString()}
                               </p>
                               {selectedPkg?.id === pkg.id && (
                                 <motion.div
@@ -429,7 +440,7 @@ export default function BookingPage() {
                               </div>
                             </div>
                             <p className="text-lg font-bold text-teal-400">
-                              +${Number(option.priceAdd).toLocaleString()}
+                              +${toNumber(option.priceAdd).toLocaleString()}
                             </p>
                           </div>
                         </button>
@@ -461,7 +472,7 @@ export default function BookingPage() {
                           <p className="text-sm text-neutral-400">{selectedPkg?.description}</p>
                         </div>
                         <p className="text-xl font-bold text-white">
-                          ${Number(selectedPkg?.priceBase).toLocaleString()}
+                          ${toNumber(selectedPkg?.priceBase).toLocaleString()}
                         </p>
                       </div>
                     </div>
@@ -479,7 +490,7 @@ export default function BookingPage() {
                               <div key={id} className="flex justify-between">
                                 <span className="text-neutral-300">{extra?.name}</span>
                                 <span className="text-teal-400">
-                                  +${Number(extra?.priceAdd).toLocaleString()}
+                                  +${toNumber(extra?.priceAdd).toLocaleString()}
                                 </span>
                               </div>
                             );
@@ -669,7 +680,7 @@ export default function BookingPage() {
                     <div className="flex justify-between items-start mb-1">
                       <span className="text-sm text-neutral-400">{selectedPkg.name}</span>
                       <span className="text-sm font-medium text-white">
-                        ${Number(selectedPkg.priceBase).toLocaleString()}
+                        ${toNumber(selectedPkg.priceBase).toLocaleString()}
                       </span>
                     </div>
                     <span className="text-xs text-neutral-600">{selectedPkg.durationDays} days</span>
@@ -684,7 +695,7 @@ export default function BookingPage() {
                       return (
                         <div key={id} className="flex justify-between text-sm">
                           <span className="text-neutral-400">{extra?.name}</span>
-                          <span className="text-teal-400">+${Number(extra?.priceAdd).toLocaleString()}</span>
+                          <span className="text-teal-400">+${toNumber(extra?.priceAdd).toLocaleString()}</span>
                         </div>
                       );
                     })}

@@ -145,17 +145,6 @@
     filter: drop-shadow(0 0 6px rgba(20, 184, 166, 0.6));
   }
 
-  /* Magnetic button glow */
-  .magnetic-glow {
-    box-shadow: 0 0 20px rgba(20, 184, 166, 0.3);
-  }
-
-  /* 3D tilt perspective */
-  .tilt-perspective {
-    perspective: 1000px;
-    transform-style: preserve-3d;
-  }
-
   /* Preloader z-index */
   .preloader-overlay {
     z-index: 100;
