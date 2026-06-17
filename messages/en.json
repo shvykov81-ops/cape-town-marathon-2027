@@ -6,6 +6,9 @@
   "navigation": {
     "home": "Home",
     "about": "About Race",
+    "prepCamp": "Prep Camp",
+    "raceWeek": "Race Week",
+    "capeTownGuide": "Cape Town Guide",
     "trainers": "Trainers",
     "pricing": "Pricing",
     "contact": "Contact",

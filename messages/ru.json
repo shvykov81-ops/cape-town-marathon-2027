@@ -6,6 +6,9 @@
   "navigation": {
     "home": "Главная",
     "about": "О марафоне",
+    "prepCamp": "Подготовительный лагерь",
+    "raceWeek": "Неделя марафона",
+    "capeTownGuide": "Гид по Кейптауну",
     "trainers": "Тренеры",
     "pricing": "Цены",
     "contact": "Контакты",
