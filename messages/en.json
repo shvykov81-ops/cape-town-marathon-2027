@@ -633,35 +633,180 @@
       }
     }
   },
-  "trainersPage": {
+  "capeTownGuide": {
     "metadata": {
-      "title": "Our Trainers — RUN & Travel",
-      "description": "Meet our certified marathon trainers and guides for Cape Town Marathon 2027"
+      "title": "Cape Town Guide — Marathon 2027",
+      "description": "Discover Cape Town: attractions, weather, and runner tips for the 2027 marathon."
     },
     "hero": {
-      "title": "Our Trainers",
-      "subtitle": "Certified marathon coaches and local guides who will prepare you for Cape Town Marathon 2027 and show you the best of South Africa."
+      "badge": "Travel Guide",
+      "title": "Discover",
+      "titleHighlight": "Cape Town",
+      "subtitle": "The Mother City awaits. Explore the best attractions, weather, and runner-specific tips.",
+      "imageAlt": "Table Mountain with cable car and fynbos vegetation"
     },
-    "list": {
-      "loading": "Loading trainers...",
-      "noTrainers": "No trainers available at the moment.",
-      "reviews": "reviews",
-      "review": "review",
-      "bookNow": "Book Now"
+    "attractions": {
+      "title": "Must-See Attractions",
+      "subtitle": "Don't miss these iconic Cape Town experiences",
+      "tipLabel": "Tip",
+      "items": {
+        "tableMountain": {
+          "name": "Table Mountain",
+          "desc": "Take the cable car or hike to the top for panoramic views of the city and ocean.",
+          "tip": "Book cable car tickets online to skip queues"
+        },
+        "vaWaterfront": {
+          "name": "V&A Waterfront",
+          "desc": "World-class shopping, dining, and entertainment at the historic harbor.",
+          "tip": "Visit the Two Oceans Aquarium for a unique experience"
+        },
+        "capePoint": {
+          "name": "Cape Point",
+          "desc": "Where the Atlantic and Indian Oceans meet. Dramatic cliffs and lighthouse.",
+          "tip": "Arrive early to avoid crowds and heat"
+        },
+        "bouldersBeach": {
+          "name": "Boulders Beach",
+          "desc": "Walk among a colony of African penguins on this sheltered beach.",
+          "tip": "Best visited in the morning when penguins are most active"
+        },
+        "kirstenbosch": {
+          "name": "Kirstenbosch Gardens",
+          "desc": "One of the world's great botanical gardens at the foot of Table Mountain.",
+          "tip": "Pack a picnic and enjoy the sunset concerts"
+        },
+        "boKaap": {
+          "name": "Bo-Kaap",
+          "desc": "Colorful houses and rich Cape Malay culture in this historic neighborhood.",
+          "tip": "Respect residents' privacy when taking photos"
+        }
+      }
     },
-    "profile": {
-      "back": "All Trainers",
-      "notFound": "Trainer not found",
-      "notFoundDesc": "The trainer you're looking for doesn't exist or has been removed.",
-      "about": "About",
-      "rating": "Rating",
-      "reviews": "reviews",
-      "review": "review",
-      "languages": "Languages",
-      "specialties": "Specialties",
-      "bookWith": "Book with",
-      "instagram": "Instagram",
-      "tripster": "Tripster"
+    "weather": {
+      "title": "Weather by Month",
+      "subtitle": "Plan your visit with our seasonal guide",
+      "month": "Month",
+      "temp": "Avg Temp",
+      "rainfall": "Rainfall",
+      "wind": "Wind",
+      "notes": "Notes",
+      "months": {
+        "jan": {
+          "label": "Jan",
+          "temp": "22°C",
+          "rain": "Low",
+          "wind": "Moderate",
+          "note": "Peak summer - hot and dry"
+        },
+        "feb": {
+          "label": "Feb",
+          "temp": "23°C",
+          "rain": "Low",
+          "wind": "Moderate",
+          "note": "Best beach weather"
+        },
+        "mar": {
+          "label": "Mar",
+          "temp": "21°C",
+          "rain": "Low",
+          "wind": "Light",
+          "note": "Ideal running conditions"
+        },
+        "apr": {
+          "label": "Apr",
+          "temp": "19°C",
+          "rain": "Moderate",
+          "wind": "Light",
+          "note": "Autumn colors in wine country"
+        },
+        "may": {
+          "label": "May",
+          "temp": "17°C",
+          "rain": "Moderate",
+          "wind": "Moderate",
+          "note": "Start of whale season"
+        },
+        "jun": {
+          "label": "Jun",
+          "temp": "15°C",
+          "rain": "High",
+          "wind": "Strong",
+          "note": "Winter storms - pack layers"
+        },
+        "jul": {
+          "label": "Jul",
+          "temp": "14°C",
+          "rain": "High",
+          "wind": "Strong",
+          "note": "Peak whale watching"
+        },
+        "aug": {
+          "label": "Aug",
+          "temp": "15°C",
+          "rain": "High",
+          "wind": "Strong",
+          "note": "Still winter - best hotel rates"
+        },
+        "sep": {
+          "label": "Sep",
+          "temp": "16°C",
+          "rain": "Moderate",
+          "wind": "Moderate",
+          "note": "Spring begins - wildflowers bloom"
+        },
+        "oct": {
+          "label": "Oct",
+          "temp": "18°C",
+          "rain": "Low",
+          "wind": "Light",
+          "note": "🎯 RACE MONTH - perfect conditions!"
+        },
+        "nov": {
+          "label": "Nov",
+          "temp": "20°C",
+          "rain": "Low",
+          "wind": "Light",
+          "note": "Late spring - warm and pleasant"
+        },
+        "dec": {
+          "label": "Dec",
+          "temp": "22°C",
+          "rain": "Low",
+          "wind": "Moderate",
+          "note": "Summer crowds - book early"
+        }
+      }
+    },
+    "runnerTips": {
+      "badge": "For Runners",
+      "title": "Runner's Guide to Cape Town",
+      "subtitle": "Essential tips for training and racing in the Mother City",
+      "items": {
+        "sunProtection": {
+          "title": "Sun Protection",
+          "desc": "Cape Town sun is intense. Use SPF 50+ and wear a cap during training runs."
+        },
+        "hydration": {
+          "title": "Hydration",
+          "desc": "The dry climate can be deceptive. Drink 500ml water per hour of running."
+        },
+        "capeDoctor": {
+          "title": "The Cape Doctor",
+          "desc": "The southeasterly wind (Cape Doctor) typically picks up after 10am. Run early."
+        },
+        "temperature": {
+          "title": "Temperature Swings",
+          "desc": "Mornings can be cool (10-12°C) even in October. Layer your race outfit."
+        },
+        "trailRunning": {
+          "title": "Trail Running",
+          "desc": "Try the Pipe Track or Lion's Head trails for stunning off-road runs."
+        },
+        "coffee": {
+          "title": "Coffee Culture",
+          "desc": "Cape Town has incredible coffee. Try Truth Coffee or Origin for pre-run fuel."
+        }
+      }
     }
   }
 }
