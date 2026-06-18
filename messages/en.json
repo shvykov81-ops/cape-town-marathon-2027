@@ -840,6 +840,87 @@
       }
     }
   },
+  "pricing": {
+    "badge": "Simple, Transparent Pricing",
+    "title": "Choose Your",
+    "titleHighlight": "Entry",
+    "subtitle": "All entries include race timing, medical support, and finisher recognition. No hidden fees. No surprises.",
+    "trustBadges": {
+      "secureBooking": {
+        "label": "Secure Booking",
+        "desc": "256-bit encryption"
+      },
+      "freeCancellation": {
+        "label": "Free Cancellation",
+        "desc": "Up to 30 days before"
+      },
+      "medicalSupport": {
+        "label": "Medical Support",
+        "desc": "24/7 on-site team"
+      }
+    },
+    "groupCalculator": {
+      "label": "Group Size",
+      "min": "1 person",
+      "max": "10 people",
+      "discountApplied": "{discount}% group discount applied!",
+      "saveOnPremium": "Save ${amount} on Premium entries"
+    },
+    "tiers": {
+      "starter": {
+        "name": "Starter",
+        "description": "Perfect for first-time marathoners",
+        "duration": "7 days",
+        "cta": "Get Started",
+        "popularBadge": "Most Popular",
+        "features": [
+          "Race entry bib",
+          "Airport transfer",
+          "Shared accommodation",
+          "Welcome dinner",
+          "Basic training plan",
+          "Medical support"
+        ]
+      },
+      "premium": {
+        "name": "Premium",
+        "description": "The complete marathon experience",
+        "duration": "10 days",
+        "cta": "Choose Premium",
+        "popularBadge": "Most Popular",
+        "features": [
+          "Everything in Starter",
+          "Private accommodation",
+          "Personal trainer sessions",
+          "Table Mountain excursion",
+          "Premium race kit",
+          "Post-race recovery spa",
+          "Finisher photo package"
+        ]
+      },
+      "elite": {
+        "name": "Elite",
+        "description": "For serious runners seeking peak performance",
+        "duration": "14 days",
+        "cta": "Go Elite",
+        "popularBadge": "Most Popular",
+        "features": [
+          "Everything in Premium",
+          "Elite coaching (1-on-1)",
+          "Nutritionist consultation",
+          "Physiotherapy sessions",
+          "VIP race day access",
+          "Exclusive afterparty",
+          "Lifetime alumni network"
+        ]
+      }
+    },
+    "perPerson": "per person / {duration}",
+    "faqTeaser": "Questions?",
+    "faqLink": "Check our FAQ",
+    "or": "or",
+    "contactLink": "contact us"
+  },
   "blog": {
     "badge": "Blog",
     "title": "Race Insights",
