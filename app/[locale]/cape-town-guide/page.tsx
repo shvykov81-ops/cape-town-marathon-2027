@@ -11,7 +11,7 @@ import {
 
 const iconMap: Record<string, React.ElementType> = {
   Mountain, ShoppingBag, MapPin, Waves, Heart, Camera,
-  Sun, Thermometer, Wind, Footprints, Coffee,
+  Sun, Thermometer, Wind, Footprints, Coffee, Droplets,
 };
 
 const attractions = [
