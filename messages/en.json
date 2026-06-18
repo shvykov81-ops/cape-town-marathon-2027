@@ -494,5 +494,143 @@
       "button": "Book the Camp",
       "secondary": "Ask a Question"
     }
+  },
+  "raceWeek": {
+    "metadata": {
+      "title": "Race Week — Cape Town Marathon 2027",
+      "description": "Four days of excitement, preparation, and celebration leading up to race day at Africa's first Abbott World Marathon Major."
+    },
+    "hero": {
+      "badge": "Race Week",
+      "title": "The Week of",
+      "titleHighlight": "Champions",
+      "subtitle": "Four days of excitement, preparation, and celebration leading up to race day."
+    },
+    "schedule": {
+      "title": "Event Schedule",
+      "subtitle": "Plan your race week experience",
+      "days": {
+        "wednesday": {
+          "day": "Wednesday",
+          "date": "May 14",
+          "events": {
+            "expoOpens": {
+              "time": "10:00",
+              "title": "Expo Opens",
+              "desc": "Collect your race bib, timing chip, and welcome pack"
+            },
+            "courseBriefing": {
+              "time": "14:00",
+              "title": "Course Briefing",
+              "desc": "Official race briefing with course director"
+            },
+            "welcomeParty": {
+              "time": "18:00",
+              "title": "Welcome Party",
+              "desc": "Live music and local cuisine at V&A Waterfront"
+            }
+          }
+        },
+        "thursday": {
+          "day": "Thursday",
+          "date": "May 15",
+          "events": {
+            "shakeOutRun": {
+              "time": "07:00",
+              "title": "Shake-out Run",
+              "desc": "Easy 3km jog with pacers along Sea Point"
+            },
+            "nutritionWorkshop": {
+              "time": "11:00",
+              "title": "Nutrition Workshop",
+              "desc": "Race day fueling strategies with sports nutritionist"
+            },
+            "photoWalk": {
+              "time": "16:00",
+              "title": "Photo Walk",
+              "desc": "Guided tour of Cape Town's most Instagrammable spots"
+            }
+          }
+        },
+        "friday": {
+          "day": "Friday",
+          "date": "May 16",
+          "events": {
+            "expoFinalDay": {
+              "time": "10:00",
+              "title": "Expo Final Day",
+              "desc": "Last chance for race merchandise and gear checks"
+            },
+            "elitePressConference": {
+              "time": "14:00",
+              "title": "Elite Press Conference",
+              "desc": "Meet the elite field and race ambassadors"
+            },
+            "pastaDinner": {
+              "time": "19:00",
+              "title": "Pasta Dinner",
+              "desc": "Carb-loading dinner for all registered runners"
+            }
+          }
+        },
+        "saturday": {
+          "day": "Saturday",
+          "date": "May 17 — RACE DAY",
+          "events": {
+            "gatesOpen": {
+              "time": "04:30",
+              "title": "Gates Open",
+              "desc": "Arrive early for bag drop and warm-up"
+            },
+            "raceStart": {
+              "time": "06:00",
+              "title": "Race Start",
+              "desc": "42.2km of pure beauty begins"
+            },
+            "awardsCeremony": {
+              "time": "12:00",
+              "title": "Awards Ceremony",
+              "desc": "Celebrate finishers at Green Point Stadium"
+            },
+            "afterParty": {
+              "time": "14:00",
+              "title": "After Party",
+              "desc": "Live music, food trucks, and victory celebrations"
+            }
+          }
+        }
+      }
+    },
+    "safari": {
+      "badge": "Post-Race",
+      "title": "Extend Your Adventure",
+      "subtitle": "Celebrate your finish with an unforgettable South African experience",
+      "options": {
+        "tableMountain": {
+          "name": "Table Mountain Safari",
+          "duration": "Half Day",
+          "price": "$89",
+          "desc": "Cable car up Table Mountain with guided hike"
+        },
+        "capePoint": {
+          "name": "Cape Point Tour",
+          "duration": "Full Day",
+          "price": "$149",
+          "desc": "Visit the Cape of Good Hope and Boulders Beach penguins"
+        },
+        "winelands": {
+          "name": "Winelands Experience",
+          "duration": "Full Day",
+          "price": "$179",
+          "desc": "Stellenbosch and Franschhoek wine tasting tour"
+        },
+        "bigFive": {
+          "name": "Big Five Safari",
+          "duration": "2 Days",
+          "price": "$599",
+          "desc": "Aquila Game Reserve — lion, elephant, buffalo, rhino, leopard"
+        }
+      }
+    }
   }
 }
