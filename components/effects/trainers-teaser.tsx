@@ -5,6 +5,7 @@ import { motion, useInView } from "framer-motion";
 import { Star, MapPin, ArrowRight, User } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useTranslations, useLocale } from "next-intl";
 
 interface Trainer {
   id: string;
@@ -22,6 +23,8 @@ interface Trainer {
 function TrainerCard({ trainer, index }: { trainer: Trainer; index: number }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const locale = useLocale();
+  const t = useTranslations("trainers");
 
   return (
     <motion.div
@@ -31,7 +34,7 @@ function TrainerCard({ trainer, index }: { trainer: Trainer; index: number }) {
       transition={{ delay: index * 0.15, duration: 0.6, ease: "easeOut" }}
       className="group relative"
     >
-      <Link href={`/trainers/${trainer.id}`} className="block">
+      <Link href={`/${locale}/trainers/${trainer.id}`} className="block">
         <div className="glass-card rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/10 hover:border-teal-500/30">
           {/* Photo */}
           <div className="relative h-64 overflow-hidden">
@@ -100,6 +103,8 @@ export function TrainersTeaser() {
   const [loading, setLoading] = useState(true);
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+  const locale = useLocale();
+  const t = useTranslations("trainers");
 
   useEffect(() => {
     fetch("/api/trainers")
@@ -127,14 +132,13 @@ export function TrainersTeaser() {
           className="text-center mb-16"
         >
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-sm font-medium mb-6">
-            World-Class Coaches
+            {t("badge")}
           </span>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-            Train with the Best
+            {t("title")}
           </h2>
           <p className="text-lg text-neutral-400 max-w-2xl mx-auto">
-            Certified marathon coaches who will prepare you for the ultimate
-            challenge and guide you through Cape Town.
+            {t("subtitle")}
           </p>
         </motion.div>
 
@@ -161,10 +165,10 @@ export function TrainersTeaser() {
           className="text-center mt-12"
         >
           <Link
-            href="/trainers"
+            href={`/${locale}/trainers`}
             className="inline-flex items-center gap-2 px-8 py-4 bg-teal-500 hover:bg-teal-400 text-neutral-950 font-bold rounded-full transition-colors shadow-lg shadow-teal-500/25"
           >
-            View All Trainers
+            {t("cta")}
             <ArrowRight className="w-5 h-5" />
           </Link>
         </motion.div>
