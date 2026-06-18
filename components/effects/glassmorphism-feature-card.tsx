@@ -4,28 +4,37 @@ import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { BadgeCheck, Mountain, Users, Calendar, ArrowRight, Play } from "lucide-react";
 import Link from "next/link";
-
-const features = [
-  {
-    icon: Mountain,
-    title: "Elite Training",
-    description: "Train with certified marathon coaches on Table Mountain routes",
-  },
-  {
-    icon: Users,
-    title: "Community",
-    description: "Join 500+ runners from 40+ countries in 2027",
-  },
-  {
-    icon: Calendar,
-    title: "Full Package",
-    description: "From airport pickup to finish line celebration",
-  },
-];
+import { useTranslations, useLocale } from "next-intl";
 
 export function GlassmorphismFeatureCard() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const locale = useLocale();
+  const t = useTranslations("features");
+
+  const features = [
+    {
+      icon: Mountain,
+      title: t("feature1Title"),
+      description: t("feature1Desc"),
+    },
+    {
+      icon: Users,
+      title: t("feature2Title"),
+      description: t("feature2Desc"),
+    },
+    {
+      icon: Calendar,
+      title: t("feature3Title"),
+      description: t("feature3Desc"),
+    },
+  ];
+
+  const stats = [
+    { value: "42.2", label: t("statDistance") },
+    { value: "500+", label: t("statRunners") },
+    { value: "12", label: t("statCoaches") },
+  ];
 
   return (
     <section ref={ref} className="relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
@@ -54,7 +63,7 @@ export function GlassmorphismFeatureCard() {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-sm font-medium mb-8"
             >
               <BadgeCheck className="w-4 h-4" />
-              Abbott WMM Candidate
+              {t("badge")}
             </motion.div>
 
             {/* Title */}
@@ -64,7 +73,7 @@ export function GlassmorphismFeatureCard() {
               transition={{ delay: 0.3, duration: 0.6 }}
               className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4"
             >
-              Experience Cape Town 2027
+              {t("title")}
             </motion.h2>
 
             {/* Subtitle */}
@@ -74,8 +83,7 @@ export function GlassmorphismFeatureCard() {
               transition={{ delay: 0.4, duration: 0.6 }}
               className="text-lg text-neutral-400 max-w-2xl mb-12"
             >
-              Join Africa&apos;s first Abbott World Marathon Majors candidate.
-              Train with elite coaches, explore Cape Town, and be part of history.
+              {t("subtitle")}
             </motion.p>
 
             {/* Stats row */}
@@ -85,11 +93,7 @@ export function GlassmorphismFeatureCard() {
               transition={{ delay: 0.5, duration: 0.6 }}
               className="grid grid-cols-3 gap-6 mb-12"
             >
-              {[
-                { value: "42.2", label: "km Distance" },
-                { value: "500+", label: "Runners" },
-                { value: "12", label: "Coaches" },
-              ].map((stat) => (
+              {stats.map((stat) => (
                 <div key={stat.label} className="text-center">
                   <div className="text-2xl sm:text-3xl font-bold text-teal-400">{stat.value}</div>
                   <div className="text-sm text-neutral-500 mt-1">{stat.label}</div>
@@ -116,7 +120,7 @@ export function GlassmorphismFeatureCard() {
               ))}
             </motion.div>
 
-            {/* CTA Buttons - Standard buttons instead of MagneticButton */}
+            {/* CTA Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -124,19 +128,19 @@ export function GlassmorphismFeatureCard() {
               className="flex flex-wrap gap-4"
             >
               <Link
-                href="/booking"
+                href={`/${locale}/booking`}
                 className="relative overflow-hidden bg-gradient-to-r from-teal-500 to-teal-400 text-black font-semibold px-8 py-4 rounded-2xl group inline-flex items-center gap-2 hover:shadow-lg hover:shadow-teal-500/25 transition-all duration-300"
               >
-                <span className="relative z-10">Book Your Spot</span>
+                <span className="relative z-10">{t("cta1")}</span>
                 <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
               </Link>
 
               <Link
-                href="/about-race"
+                href={`/${locale}/about-race`}
                 className="relative overflow-hidden bg-white/10 text-white font-semibold px-8 py-4 rounded-2xl group inline-flex items-center gap-2 border border-white/20 hover:bg-white/20 transition-all duration-300"
               >
-                <span className="relative z-10">Explore Route</span>
+                <span className="relative z-10">{t("cta2")}</span>
                 <Play className="w-5 h-5 relative z-10" />
               </Link>
             </motion.div>
