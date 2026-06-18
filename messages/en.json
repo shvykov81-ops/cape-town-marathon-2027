@@ -840,85 +840,67 @@
       }
     }
   },
-  "pricing": {
-    "badge": "Simple, Transparent Pricing",
-    "title": "Choose Your",
-    "titleHighlight": "Entry",
-    "subtitle": "All entries include race timing, medical support, and finisher recognition. No hidden fees. No surprises.",
-    "trustBadges": {
-      "secureBooking": {
-        "label": "Secure Booking",
-        "desc": "256-bit encryption"
+  "blog": {
+    "badge": "Blog",
+    "title": "Race Insights",
+    "subtitle": "Training tips, race stories, and everything you need to know about running in Cape Town.",
+    "readTime": "5 min read",
+    "readMore": "Read more",
+    "posts": [
+      {
+        "id": "1",
+        "title": "Top 10 Training Tips for Cape Town Marathon",
+        "slug": "top-10-training-tips",
+        "excerpt": "Expert advice from elite coaches on preparing for Africa's major marathon.",
+        "category": "Training",
+        "image": "/images/blog-training.jpg",
+        "date": "2027-01-15"
       },
-      "freeCancellation": {
-        "label": "Free Cancellation",
-        "desc": "Up to 30 days before"
+      {
+        "id": "2",
+        "title": "Cape Town Weather: What to Expect on Race Day",
+        "slug": "cape-town-weather-race-day",
+        "excerpt": "Understanding Cape Town's unique climate for optimal race preparation.",
+        "category": "Race Day",
+        "image": "/images/blog-weather.jpg",
+        "date": "2027-02-01"
       },
-      "medicalSupport": {
-        "label": "Medical Support",
-        "desc": "24/7 on-site team"
+      {
+        "id": "3",
+        "title": "The Ultimate Safari Guide for Runners",
+        "slug": "safari-guide-for-runners",
+        "excerpt": "Combine your marathon trip with an unforgettable wildlife experience.",
+        "category": "Travel",
+        "image": "/images/blog-safari.jpg",
+        "date": "2027-02-20"
+      },
+      {
+        "id": "4",
+        "title": "Nutrition Strategy for Marathon Success",
+        "slug": "nutrition-strategy-marathon",
+        "excerpt": "What to eat before, during, and after the big race.",
+        "category": "Nutrition",
+        "image": "/images/blog-nutrition.jpg",
+        "date": "2027-03-05"
+      },
+      {
+        "id": "5",
+        "title": "Cape Town's Best Running Routes",
+        "slug": "best-running-routes-cape-town",
+        "excerpt": "Explore the most scenic trails and roads for your training runs.",
+        "category": "Training",
+        "image": "/images/blog-routes.jpg",
+        "date": "2027-03-15"
+      },
+      {
+        "id": "6",
+        "title": "Gear Guide: What to Pack for Cape Town",
+        "slug": "gear-guide-cape-town",
+        "excerpt": "Essential gear recommendations for running in Cape Town's conditions.",
+        "category": "Gear",
+        "image": "/images/blog-gear.jpg",
+        "date": "2027-04-01"
       }
-    },
-    "groupCalculator": {
-      "label": "Group Size",
-      "min": "1 person",
-      "max": "10 people",
-      "discountApplied": "{discount}% group discount applied!",
-      "saveOnPremium": "Save ${amount} on Premium entries"
-    },
-    "tiers": {
-      "starter": {
-        "name": "Starter",
-        "description": "Perfect for first-time marathoners",
-        "duration": "7 days",
-        "cta": "Get Started",
-        "popularBadge": "Most Popular",
-        "features": [
-          "Race entry bib",
-          "Airport transfer",
-          "Shared accommodation",
-          "Welcome dinner",
-          "Basic training plan",
-          "Medical support"
-        ]
-      },
-      "premium": {
-        "name": "Premium",
-        "description": "The complete marathon experience",
-        "duration": "10 days",
-        "cta": "Choose Premium",
-        "popularBadge": "Most Popular",
-        "features": [
-          "Everything in Starter",
-          "Private accommodation",
-          "Personal trainer sessions",
-          "Table Mountain excursion",
-          "Premium race kit",
-          "Post-race recovery spa",
-          "Finisher photo package"
-        ]
-      },
-      "elite": {
-        "name": "Elite",
-        "description": "For serious runners seeking peak performance",
-        "duration": "14 days",
-        "cta": "Go Elite",
-        "popularBadge": "Most Popular",
-        "features": [
-          "Everything in Premium",
-          "Elite coaching (1-on-1)",
-          "Nutritionist consultation",
-          "Physiotherapy sessions",
-          "VIP race day access",
-          "Exclusive afterparty",
-          "Lifetime alumni network"
-        ]
-      }
-    },
-    "perPerson": "per person / {duration}",
-    "faqTeaser": "Questions?",
-    "faqLink": "Check our FAQ",
-    "or": "or",
-    "contactLink": "contact us"
+    ]
   }
 }
