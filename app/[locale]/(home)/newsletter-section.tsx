@@ -3,16 +3,19 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Send, Mail, Check, AlertCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export function NewsletterSection() {
     const [email, setEmail] = useState("");
     const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
     const [message, setMessage] = useState("");
+    const t = useTranslations("newsletter");
 
-    async function handleSubmit(e: React.FormEvent) {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setStatus("loading");
+        if (!email) return;
 
+        setStatus("loading");
         try {
             const response = await fetch("/api/subscribe", {
                 method: "POST",
@@ -24,31 +27,32 @@ export function NewsletterSection() {
 
             if (response.ok) {
                 setStatus("success");
-                setMessage("You're in! Check your inbox for updates.");
+                setMessage(t("successMessage"));
                 setEmail("");
             } else {
-                throw new Error(data.error || "Something went wrong");
+                throw new Error(data.error || t("errorDefault"));
             }
         } catch (error) {
             setStatus("error");
-            setMessage(error instanceof Error ? error.message : "Failed to subscribe");
+            setMessage(error instanceof Error ? error.message : t("errorFailed"));
         }
-    }
+    };
 
     return (
         <section className="py-24 bg-gradient-to-b from-neutral-950 to-teal-950/20">
             <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 <motion.div
-                    initial={{ opacity: 0, y: 30 }}
+                    initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
                 >
                     <div className="w-16 h-16 mx-auto mb-6 bg-teal-500/20 rounded-2xl flex items-center justify-center">
                         <Mail className="w-8 h-8 text-teal-400" />
                     </div>
-                    <h2 className="text-3xl sm:text-4xl font-bold mb-4">Stay in the Race</h2>
+                    <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t("title")}</h2>
                     <p className="text-neutral-400 mb-8 max-w-lg mx-auto">
-                        Get training tips, course updates, and exclusive early-bird offers delivered to your inbox.
+                        {t("subtitle")}
                     </p>
 
                     <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
@@ -56,8 +60,7 @@ export function NewsletterSection() {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Enter your email"
-                            required
+                            placeholder={t("placeholder")}
                             disabled={status === "loading"}
                             className="flex-1 px-5 py-3.5 bg-white/5 border border-white/10 rounded-full text-white placeholder:text-neutral-500 focus:outline-none focus:border-teal-500 transition-colors disabled:opacity-50"
                         />
@@ -73,7 +76,7 @@ export function NewsletterSection() {
                             ) : (
                                 <Send className="w-4 h-4" />
                             )}
-                            {status === "loading" ? "Subscribing..." : status === "success" ? "Subscribed!" : "Subscribe"}
+                            {status === "loading" ? t("loading") : status === "success" ? t("subscribed") : t("subscribe")}
                         </button>
                     </form>
 
@@ -100,7 +103,7 @@ export function NewsletterSection() {
                     )}
 
                     <p className="text-xs text-neutral-600 mt-4">
-                        No spam. Unsubscribe anytime. We respect your privacy.
+                        {t("privacy")}
                     </p>
                 </motion.div>
             </div>
