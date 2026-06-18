@@ -632,5 +632,36 @@
         }
       }
     }
+  },
+  "trainersPage": {
+    "metadata": {
+      "title": "Our Trainers — RUN & Travel",
+      "description": "Meet our certified marathon trainers and guides for Cape Town Marathon 2027"
+    },
+    "hero": {
+      "title": "Our Trainers",
+      "subtitle": "Certified marathon coaches and local guides who will prepare you for Cape Town Marathon 2027 and show you the best of South Africa."
+    },
+    "list": {
+      "loading": "Loading trainers...",
+      "noTrainers": "No trainers available at the moment.",
+      "reviews": "reviews",
+      "review": "review",
+      "bookNow": "Book Now"
+    },
+    "profile": {
+      "back": "All Trainers",
+      "notFound": "Trainer not found",
+      "notFoundDesc": "The trainer you're looking for doesn't exist or has been removed.",
+      "about": "About",
+      "rating": "Rating",
+      "reviews": "reviews",
+      "review": "review",
+      "languages": "Languages",
+      "specialties": "Specialties",
+      "bookWith": "Book with",
+      "instagram": "Instagram",
+      "tripster": "Tripster"
+    }
   }
 }

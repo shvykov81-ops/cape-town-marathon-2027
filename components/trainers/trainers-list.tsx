@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Star, MapPin, Languages } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Star, Languages } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface Trainer {
@@ -21,6 +22,7 @@ interface Trainer {
 }
 
 export function TrainersList() {
+  const t = useTranslations("trainersPage.list");
   const [trainers, setTrainers] = useState<Trainer[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,6 +44,19 @@ export function TrainersList() {
       </div>
     );
   }
+
+  if (trainers.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <p className="text-neutral-400 text-lg">{t("noTrainers")}</p>
+      </div>
+    );
+  }
+
+  const reviewLabel = (count: number) => {
+    if (count === 1) return t("review");
+    return t("reviews");
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -87,7 +102,7 @@ export function TrainersList() {
                     />
                   ))}
                   <span className="text-sm text-neutral-400 ml-1">
-                    {trainer.rating.toFixed(1)} ({trainer.reviewCount})
+                    {trainer.rating.toFixed(1)} ({trainer.reviewCount} {reviewLabel(trainer.reviewCount)})
                   </span>
                 </div>
 

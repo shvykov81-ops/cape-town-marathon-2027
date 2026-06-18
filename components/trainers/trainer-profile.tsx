@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Star, Languages, Instagram, ExternalLink, ArrowLeft, MapPin } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Star, Languages, Instagram, ExternalLink, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -24,7 +25,8 @@ interface Trainer {
   isActive: boolean;
 }
 
-export function TrainerProfile({ params }: { params: Promise<{ id: string }> }) {
+export function TrainerProfile({ params }: { params: Promise<{ locale: string; id: string }> }) {
+  const t = useTranslations("trainersPage.profile");
   const [trainer, setTrainer] = useState<Trainer | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState(0);
@@ -54,11 +56,12 @@ export function TrainerProfile({ params }: { params: Promise<{ id: string }> }) 
   if (!trainer) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold mb-4">Trainer not found</h1>
+        <h1 className="text-2xl font-bold mb-4">{t("notFound")}</h1>
+        <p className="text-neutral-400 mb-6">{t("notFoundDesc")}</p>
         <Link href="/trainers">
           <Button className="bg-teal-600 hover:bg-teal-500">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Trainers
+            {t("back")}
           </Button>
         </Link>
       </div>
@@ -70,11 +73,19 @@ export function TrainerProfile({ params }: { params: Promise<{ id: string }> }) 
     ...trainer.photos,
   ].filter(Boolean) as string[];
 
+  const reviewLabel = (count: number) => {
+    if (count === 1) return t("review");
+    return t("reviews");
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-      <Link href="/trainers" className="inline-flex items-center text-neutral-400 hover:text-white mb-6 transition-colors">
+      <Link
+        href="/trainers"
+        className="inline-flex items-center text-neutral-400 hover:text-white mb-6 transition-colors"
+      >
         <ArrowLeft className="w-4 h-4 mr-2" />
-        All Trainers
+        {t("back")}
       </Link>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -147,7 +158,9 @@ export function TrainerProfile({ params }: { params: Promise<{ id: string }> }) 
               ))}
             </div>
             <span className="text-lg font-medium">{trainer.rating.toFixed(1)}</span>
-            <span className="text-neutral-400">({trainer.reviewCount} reviews)</span>
+            <span className="text-neutral-400">
+              ({trainer.reviewCount} {reviewLabel(trainer.reviewCount)})
+            </span>
           </div>
 
           <div className="flex flex-wrap gap-2 mb-6">
@@ -163,7 +176,7 @@ export function TrainerProfile({ params }: { params: Promise<{ id: string }> }) 
 
           <Card className="bg-white/5 border-white/10 mb-6">
             <CardContent className="p-6">
-              <h2 className="text-lg font-semibold mb-3">About</h2>
+              <h2 className="text-lg font-semibold mb-3">{t("about")}</h2>
               <p className="text-neutral-300 leading-relaxed whitespace-pre-wrap">
                 {trainer.bio}
               </p>
@@ -173,6 +186,7 @@ export function TrainerProfile({ params }: { params: Promise<{ id: string }> }) 
           <div className="flex flex-wrap gap-3 mb-6">
             <div className="flex items-center gap-2 text-neutral-400">
               <Languages className="w-4 h-4" />
+              <span className="text-sm">{t("languages")}:</span>
               {trainer.languages.join(", ")}
             </div>
           </div>
@@ -186,7 +200,7 @@ export function TrainerProfile({ params }: { params: Promise<{ id: string }> }) 
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-pink-500/10 text-pink-400 hover:bg-pink-500/20 transition-colors"
               >
                 <Instagram className="w-4 h-4" />
-                Instagram
+                {t("instagram")}
               </a>
             )}
             {trainer.tripsterUrl && (
@@ -197,7 +211,7 @@ export function TrainerProfile({ params }: { params: Promise<{ id: string }> }) 
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors"
               >
                 <ExternalLink className="w-4 h-4" />
-                Tripster
+                {t("tripster")}
               </a>
             )}
           </div>
@@ -205,7 +219,7 @@ export function TrainerProfile({ params }: { params: Promise<{ id: string }> }) 
           <div className="mt-8">
             <Link href={`/booking?trainer=${trainer.id}`}>
               <Button className="bg-teal-600 hover:bg-teal-500 text-lg px-8 py-3">
-                Book with {trainer.firstName}
+                {t("bookWith")} {trainer.firstName}
               </Button>
             </Link>
           </div>
