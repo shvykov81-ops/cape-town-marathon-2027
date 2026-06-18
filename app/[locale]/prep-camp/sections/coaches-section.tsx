@@ -29,10 +29,10 @@ export function CoachesSection() {
     fetch("/api/trainers")
       .then((res) => res.json())
       .then((data: Trainer[]) => {
-        // Sort by rating, take top 5
+        // Sort by rating, take top 3
         const sorted = data
           .sort((a, b) => b.rating - a.rating)
-          .slice(0, 5);
+          .slice(0, 3);
         setTrainers(sorted);
         setLoading(false);
       })
