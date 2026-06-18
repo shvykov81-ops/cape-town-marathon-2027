@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Zap, Users, Crown, ArrowRight, Shield, Clock, HeartPulse } from "lucide-react";
+import { Check, Zap, Users, Crown, ArrowRight, Shield, Clock, Heart } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
@@ -36,7 +36,7 @@ const tierPrices: Record<string, number> = {
 const trustIcons: Record<string, React.ElementType> = {
   secureBooking: Shield,
   freeCancellation: Clock,
-  medicalSupport: HeartPulse,
+  medicalSupport: Heart,
 };
 
 export default function PricingPage() {
