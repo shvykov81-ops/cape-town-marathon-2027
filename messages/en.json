@@ -400,7 +400,9 @@
       "badge": "Your Coaches",
       "title": "World-Class",
       "titleHighlight": "Mentors",
-      "subtitle": "Learn from coaches who have trained Olympic medalists and world record holders."
+      "subtitle": "Learn from coaches who have trained Olympic medalists and world record holders.",
+      "noTrainers": "No trainers available at the moment.",
+      "allTrainers": "View All Trainers"
     },
     "accommodation": {
       "badge": "Where You Stay",
