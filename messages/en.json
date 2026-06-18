@@ -339,5 +339,158 @@
       "button": "Secure Your Entry",
       "secondary": "View Packages"
     }
+  },
+  "prepCampPage": {
+    "metadata": {
+      "title": "Prep Camp — Cape Town Marathon 2027",
+      "description": "7-day elite marathon prep camp in Cape Town. Train with world-class coaches, recover in luxury, and arrive at the start line ready."
+    },
+    "hero": {
+      "badge": "7-Day Elite Camp",
+      "title": "Train Like a",
+      "titleHighlight": "Champion",
+      "subtitle": "An intensive 7-day prep camp designed for marathon runners. Elite coaching, luxury recovery, and race-ready preparation in the heart of Cape Town.",
+      "cta": "Book the Camp",
+      "scroll": "Explore the program"
+    },
+    "program": {
+      "badge": "The Program",
+      "title": "7 Days to",
+      "titleHighlight": "Peak Form",
+      "subtitle": "Every day is designed to build fitness, sharpen speed, and ensure you arrive at the start line in perfect condition.",
+      "days": {
+        "day1": {
+          "label": "Day 1",
+          "title": "Arrival & Assessment",
+          "desc": "Airport pickup, hotel check-in, biomechanical analysis, and easy shake-out run along Sea Point promenade."
+        },
+        "day2": {
+          "label": "Day 2",
+          "title": "Base Building",
+          "desc": "Long aerobic run on Chapman's Peak Drive. Afternoon yoga and nutrition workshop with team dietitian."
+        },
+        "day3": {
+          "label": "Day 3",
+          "title": "Speed & Hills",
+          "desc": "Track session at Green Point Stadium. Hill repeats on Signal Hill. Evening ice bath and physio."
+        },
+        "day4": {
+          "label": "Day 4",
+          "title": "Active Recovery",
+          "desc": "Easy run on the beach. Table Mountain hike for altitude adaptation. Spa and massage session."
+        },
+        "day5": {
+          "label": "Day 5",
+          "title": "Race Simulation",
+          "desc": "Half-marathon tempo on the actual marathon course. Pace strategy session with your assigned coach."
+        },
+        "day6": {
+          "label": "Day 6",
+          "title": "Taper & Tuning",
+          "desc": "Short intervals and strides. Final biomechanical check. Race day briefing and kit distribution."
+        },
+        "day7": {
+          "label": "Day 7",
+          "title": "Race Day",
+          "desc": "Morning warm-up with coaches. Transport to start line. Post-race celebration and awards ceremony."
+        }
+      }
+    },
+    "coaches": {
+      "badge": "Your Coaches",
+      "title": "World-Class",
+      "titleHighlight": "Mentors",
+      "subtitle": "Learn from coaches who have trained Olympic medalists and world record holders."
+    },
+    "accommodation": {
+      "badge": "Where You Stay",
+      "title": "Recovery in",
+      "titleHighlight": "Style",
+      "subtitle": "5-star accommodation with athlete-focused amenities. Sleep, eat, and recover like a pro.",
+      "features": {
+        "hotel": {
+          "title": "Waterfront Hotel",
+          "desc": "5-star hotel 500m from the start line. Ocean views, athlete-friendly breakfast from 4:30 AM."
+        },
+        "nutrition": {
+          "title": "Performance Nutrition",
+          "desc": "Personalized meal plans by sports dietitian. Carb-loading menus, hydration protocols, supplements."
+        },
+        "spa": {
+          "title": "Recovery Spa",
+          "desc": "Daily physio, ice baths, compression therapy, and sports massage included in all packages."
+        },
+        "transport": {
+          "title": "Door-to-Door Transport",
+          "desc": "All training venues, race start, and airport transfers covered. No logistics stress."
+        }
+      }
+    },
+    "schedule": {
+      "badge": "Daily Schedule",
+      "title": "A Typical",
+      "titleHighlight": "Day",
+      "subtitle": "Structured, balanced, and optimized for marathon performance.",
+      "morning": "Morning",
+      "morningTime": "05:30 – 09:00",
+      "morningDesc": "Wake-up, breakfast, training session (run/track/hills), cool-down stretch",
+      "afternoon": "Afternoon",
+      "afternoonTime": "12:00 – 15:00",
+      "afternoonDesc": "Lunch, recovery session (spa/ice bath/massage), coach debrief",
+      "evening": "Evening",
+      "eveningTime": "17:00 – 21:00",
+      "eveningDesc": "Workshop or seminar, dinner, free time, lights out by 21:30"
+    },
+    "pricing": {
+      "badge": "Packages",
+      "title": "Choose Your",
+      "titleHighlight": "Experience",
+      "subtitle": "All packages include accommodation, meals, coaching, transport, and race entry.",
+      "essential": {
+        "name": "Essential",
+        "price": "$1,490",
+        "desc": "Shared room, group coaching, all meals, transport, race entry",
+        "features": [
+          "Shared twin room",
+          "Group coaching (1:8)",
+          "All meals",
+          "Airport transfer",
+          "Race entry"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "$2,490",
+        "desc": "Private room, semi-private coaching, daily physio, priority start",
+        "features": [
+          "Private room",
+          "Semi-private coaching (1:4)",
+          "Daily physio",
+          "Priority race start",
+          "Post-race celebration dinner"
+        ]
+      },
+      "elite": {
+        "name": "Elite",
+        "price": "$4,490",
+        "desc": "Suite, 1:1 coaching, personal physio, nutritionist, VIP race experience",
+        "features": [
+          "Ocean-view suite",
+          "1:1 personal coach",
+          "Personal physio & nutritionist",
+          "VIP race package",
+          "Exclusive athlete lounge"
+        ]
+      },
+      "cta": "Book This Package",
+      "popular": "Most Popular"
+    },
+    "cta": {
+      "title": "Ready to",
+      "titleHighlight": "Transform",
+      "subtitle": "Spots are limited to 40 runners per camp. Reserve your place today.",
+      "button": "Book the Camp",
+      "secondary": "Ask a Question"
+    }
   }
 }
