@@ -1,14 +1,14 @@
 {
   "metadata": {
     "title": "RUN & Travel — Cape Town Marathon 2027",
-    "description": "Africa's first Abbott World Marathon Majors Candidate. Prep camp booking platform."
+    "description": "Africa's first Abbott World Marathon Majors Candidate. Book your prep camp experience."
   },
   "navigation": {
     "home": "Home",
-    "about": "About Race",
-    "prepCamp": "Prep Camp",
+    "about": "About the Race",
+    "prepCamp": "Our Camp",
     "raceWeek": "Race Week",
-    "capeTownGuide": "Cape Town Guide",
+    "capeTownGuide": "Cape Town",
     "trainers": "Trainers",
     "pricing": "Pricing",
     "contact": "Contact",
@@ -23,20 +23,20 @@
     "line1": "CAPE TOWN",
     "line2": "MARATHON",
     "line3": "2027",
-    "subtitle1": "Prepare with world-class coaches. Travel with purpose.",
+    "subtitle1": "Train with world-class coaches. Travel with purpose.",
     "subtitle2": "From airport to finish line — we handle everything.",
     "cta1": "Book Your Spot",
-    "cta2": "Watch Experience",
+    "cta2": "Watch the Experience",
     "scroll": "Scroll",
-    "sideInfo": "Cape Town, RSA · Sept–Oct 2027",
+    "sideInfo": "Cape Town, RSA · Sep–Oct 2027",
     "statDistance": "Distance",
     "statRunners": "Runners",
     "statCoaches": "Coaches"
   },
   "features": {
     "badge": "Abbott WMM Candidate",
-    "title": "Experience Cape Town 2027",
-    "subtitle": "Join Africa's first Abbott World Marathon Majors candidate. Train with elite coaches, explore Cape Town, and be part of history.",
+    "title": "Discover Cape Town 2027",
+    "subtitle": "Join Africa's first candidate for the Abbott World Marathon Majors series. Train with elite coaches, explore Cape Town, and become part of history.",
     "feature1Title": "Elite Training",
     "feature1Desc": "Train with certified marathon coaches on Table Mountain routes",
     "feature2Title": "Community",
@@ -44,7 +44,7 @@
     "feature3Title": "Full Package",
     "feature3Desc": "From airport pickup to finish line celebration",
     "cta1": "Book Your Spot",
-    "cta2": "Explore Route",
+    "cta2": "Explore the Route",
     "statDistance": "km Distance",
     "statRunners": "Runners",
     "statCoaches": "Coaches"
@@ -53,22 +53,83 @@
     "badge": "World-Class Coaches",
     "title": "Train with the Best",
     "subtitle": "Certified marathon coaches who will prepare you for the ultimate challenge and guide you through Cape Town.",
-    "cta": "View All Trainers",
-    "rating": "Rating",
-    "specialties": "Specialties",
-    "languages": "Languages",
-    "location": "Location",
-    "bookWith": "Book with {name}"
+    "cta": "All Trainers"
+  },
+  "newsletter": {
+    "title": "Stay in the Race",
+    "subtitle": "Get exclusive training tips, race updates, and special offers delivered to your inbox.",
+    "placeholder": "Enter your email",
+    "subscribe": "Subscribe",
+    "loading": "Subscribing...",
+    "subscribed": "Subscribed!",
+    "successMessage": "You're in! Check your email for confirmation.",
+    "errorDefault": "Something went wrong",
+    "errorFailed": "Failed to subscribe",
+    "privacy": "No spam, unsubscribe anytime. We respect your privacy."
+  },
+  "prepCamp": {
+    "badge": "Prep Camp",
+    "title": "Train Smarter in",
+    "titleHighlight": "Cape Town",
+    "description": "A world-class prep camp designed for marathon runners. Train with elite coaches, recover in luxury, and arrive at the start line in peak condition.",
+    "features": {
+      "coaching": {
+        "title": "Elite Coaching",
+        "desc": "World-class coaches from Kenya & Ethiopia"
+      },
+      "stay": {
+        "title": "Luxury Stay",
+        "desc": "5-star accommodation near the start line"
+      },
+      "nutrition": {
+        "title": "Nutrition Plans",
+        "desc": "Personalized meal prep for peak performance"
+      },
+      "recovery": {
+        "title": "Recovery Spa",
+        "desc": "Daily physio & ice bath sessions"
+      }
+    },
+    "cta": "Explore Prep Camp"
+  },
+  "route": {
+    "badge": "The Course",
+    "title": "42.2 Kilometers of",
+    "titleHighlight": "Glory",
+    "description": "From the Atlantic seaboard to the shadow of Table Mountain — one of the world's most scenic marathon routes.",
+    "checkpoints": {
+      "start": {
+        "label": "Start",
+        "desc": "Green Point Stadium"
+      },
+      "seaPoint": {
+        "label": "Sea Point",
+        "desc": "Oceanfront promenade"
+      },
+      "halfway": {
+        "label": "Halfway",
+        "desc": "Scenic Atlantic coast"
+      },
+      "newlands": {
+        "label": "Newlands",
+        "desc": "Table Mountain view"
+      },
+      "finish": {
+        "label": "Finish",
+        "desc": "Green Point Stadium"
+      }
+    },
+    "elevation": "Elevation Profile"
   },
   "booking": {
     "title": "Book Your",
     "titleHighlight": "Experience",
-    "subtitle": "Secure your spot at Africa's first Abbott World Marathon Majors candidate event.",
+    "subtitle": "Reserve your spot at Africa's first Abbott World Marathon Majors candidate.",
     "step1": "Package",
     "step2": "Details",
     "step3": "Extras",
     "step4": "Review",
-    "selectPackage": "Select Your Package",
+    "selectPackage": "Select Package",
     "loading": "Loading...",
     "days": "days",
     "selected": "Selected",
@@ -83,7 +144,7 @@
     "checkOut": "Check-out Date",
     "required": "Required",
     "selectTrainer": "Select Trainer (Optional)",
-    "addExtras": "Add Extras",
+    "addExtras": "Additional Options",
     "noExtras": "No additional options for this package.",
     "review": "Review Your Booking",
     "packageLabel": "Package",
@@ -95,8 +156,8 @@
     "processing": "Processing...",
     "secure": "Your data is encrypted and protected",
     "successTitle": "Booking Confirmed!",
-    "successMessage": "Thank you for registering for the Cape Town Marathon 2027 Prep Camp. A confirmation has been sent to your dashboard.",
-    "yourTrainer": "Your trainer",
+    "successMessage": "Thank you for registering for the Cape Town Marathon 2027 Prep Camp. Confirmation sent to your dashboard.",
+    "yourTrainer": "Your Trainer",
     "goDashboard": "Go to Dashboard",
     "backHome": "Back to Home",
     "back": "Back",
@@ -105,14 +166,14 @@
     "orderSummary": "Order Summary",
     "total": "Total",
     "secureNote": "Secure booking. Your data is encrypted.",
-    "ssl": "SSL Secured",
+    "ssl": "SSL Protection",
     "encrypted": "Encrypted",
     "verified": "Verified"
   },
   "contact": {
     "title": "Get in Touch",
     "subtitle": "Have questions about the Cape Town Marathon 2027? We're here to help.",
-    "formTitle": "Send us a message",
+    "formTitle": "Send a Message",
     "name": "Name",
     "email": "Email",
     "phone": "Phone",
@@ -123,18 +184,18 @@
     "subjectPartnership": "Partnership",
     "subjectMedia": "Media",
     "message": "Message",
-    "send": "Send Message",
+    "send": "Send",
     "sending": "Sending...",
     "success": "Message sent successfully!",
-    "telegramTitle": "Join our Telegram",
-    "telegramDesc": "Get instant updates and chat with our team",
+    "telegramTitle": "Our Telegram",
+    "telegramDesc": "Get updates and chat with the team",
     "quickTitle": "Quick Contact",
     "quickTelegram": "Telegram",
-    "quickResponse": "Usually responds in minutes"
+    "quickResponse": "We usually reply within minutes"
   },
   "footer": {
     "brand": "RUN & Travel",
-    "tagline": "Africa's first Abbott World Marathon Majors candidate event.",
+    "tagline": "Africa's first candidate for the Abbott World Marathon Majors series.",
     "telegram": "Join us on Telegram",
     "event": "Event",
     "services": "Services",
@@ -144,6 +205,139 @@
   "locale": {
     "switch": "Language",
     "en": "English",
-    "ru": "Русский"
+    "ru": "Russian"
+  },
+  "aboutRace": {
+    "metadata": {
+      "title": "About the Race — Cape Town Marathon 2027",
+      "description": "Africa's first Abbott World Marathon Major. History, course, records, and what makes Cape Town 2027 legendary."
+    },
+    "hero": {
+      "badge": "Abbott World Marathon Major",
+      "title": "Africa's First",
+      "titleHighlight": "Major",
+      "subtitle": "From candidacy to history. The Sanlam Cape Town Marathon joins the world's most prestigious marathon series in 2027.",
+      "cta": "Book Your Place",
+      "scroll": "Discover the race"
+    },
+    "history": {
+      "badge": "Our Journey",
+      "title": "Three Decades of",
+      "titleHighlight": "Excellence",
+      "timeline": {
+        "1994": {
+          "year": "1994",
+          "title": "The Beginning",
+          "desc": "First edition with 500 runners. Julian Paul wins in 2:26:45."
+        },
+        "2014": {
+          "year": "2014",
+          "title": "Rapid Growth",
+          "desc": "Race expands to 10,000+ participants. Becomes South Africa's premier road race."
+        },
+        "2024": {
+          "year": "2024",
+          "title": "AbbottWMM Candidate",
+          "desc": "Officially enters candidacy period for Abbott World Marathon Majors."
+        },
+        "2026": {
+          "year": "2026",
+          "title": "Final Assessment",
+          "desc": "Record-breaking edition. Mohamed Esa runs 2:04:55 — fastest marathon on African soil."
+        },
+        "2027": {
+          "year": "2027",
+          "title": "Africa's First Major",
+          "desc": "Officially joins Tokyo, Boston, London, Berlin, Chicago, New York, and Sydney as the 8th AbbottWMM."
+        }
+      }
+    },
+    "wmm": {
+      "badge": "Abbott World Marathon Majors",
+      "title": "Joining the World's",
+      "titleHighlight": "Most Elite Circle",
+      "subtitle": "The Abbott World Marathon Majors is a series of the world's largest and most renowned marathons. Cape Town becomes the 8th member and the first from Africa.",
+      "members": {
+        "tokyo": "Tokyo",
+        "boston": "Boston",
+        "london": "London",
+        "sydney": "Sydney",
+        "berlin": "Berlin",
+        "chicago": "Chicago",
+        "newYork": "New York",
+        "capeTown": "Cape Town"
+      },
+      "cta": "Explore the Series"
+    },
+    "course": {
+      "badge": "The Course",
+      "title": "42.2 Kilometers of",
+      "titleHighlight": "Pure Beauty",
+      "subtitle": "Start and finish at Green Point Stadium. A scenic coastal route with Table Mountain as your constant companion.",
+      "stats": {
+        "distance": "Distance",
+        "distanceValue": "42.2 km",
+        "elevation": "Elevation Gain",
+        "elevationValue": "~120 m",
+        "temperature": "Avg Temperature",
+        "temperatureValue": "14°C",
+        "aidStations": "Aid Stations",
+        "aidStationsValue": "18"
+      },
+      "checkpoints": {
+        "start": {
+          "label": "Start",
+          "desc": "Green Point Stadium"
+        },
+        "districtSix": {
+          "label": "District Six",
+          "desc": "Historic neighbourhood"
+        },
+        "woodstock": {
+          "label": "Woodstock",
+          "desc": "Vibrant street art"
+        },
+        "seaPoint": {
+          "label": "Sea Point",
+          "desc": "Atlantic promenade"
+        },
+        "clifton": {
+          "label": "Clifton",
+          "desc": "World-famous beaches"
+        },
+        "finish": {
+          "label": "Finish",
+          "desc": "Green Point Stadium"
+        }
+      },
+      "note": "The final 5km features the famous 'Loop of Death' — passing the finish line before one final push to glory."
+    },
+    "records": {
+      "badge": "Race Records",
+      "title": "Records Made to",
+      "titleHighlight": "Be Broken",
+      "menTitle": "Men's Record",
+      "menName": "Mohamed Esa",
+      "menTime": "2:04:55",
+      "menYear": "2026",
+      "menDesc": "Fastest marathon ever run on African soil on a certified course",
+      "womenTitle": "Women's Record",
+      "womenName": "Glenrose Xaba",
+      "womenTime": "2:22:22",
+      "womenYear": "2026",
+      "womenDesc": "South African national record set on home soil",
+      "legendTitle": "Legendary Finish",
+      "legendName": "Eliud Kipchoge",
+      "legendTime": "2:13:29",
+      "legendYear": "2015",
+      "legendDesc": "Two-time Olympic champion's first marathon on African soil"
+    },
+    "cta": {
+      "title": "Be Part of",
+      "titleHighlight": "History",
+      "subtitle": "Join 20,000+ runners at Africa's first Abbott World Marathon Major. Entries open 10–24 June 2026.",
+      "button": "Secure Your Entry",
+      "secondary": "View Packages"
+    }
   }
 }
