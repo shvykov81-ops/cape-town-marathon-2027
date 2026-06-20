@@ -10,6 +10,24 @@ function checkAdmin(session: any) {
   return null;
 }
 
+// Generate unique slug from firstName + lastName
+async function generateUniqueSlug(firstName: string, lastName: string): Promise<string> {
+  const base = `${firstName}-${lastName}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  let slug = base || "coach";
+  let counter = 1;
+
+  while (await prisma.trainer.findUnique({ where: { slug } })) {
+    slug = `${base}-${counter}`;
+    counter++;
+  }
+
+  return slug;
+}
+
 export async function GET() {
   const session = await auth();
   const denied = checkAdmin(session);
@@ -43,8 +61,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Generate slug if not provided
+    const slug = parsed.data.slug || await generateUniqueSlug(parsed.data.firstName, parsed.data.lastName);
+
     const trainer = await prisma.trainer.create({
-      data: parsed.data,
+      data: {
+        ...parsed.data,
+        slug,
+      },
+    });
+
+    // Create audit log
+    await prisma.trainerProfileChange.create({
+      data: {
+        trainerId: trainer.id,
+        changedBy: session?.user?.id || "admin",
+        changeType: "CREATE",
+        fieldName: "all",
+        newValue: JSON.stringify(parsed.data),
+      },
     });
 
     return NextResponse.json(trainer, { status: 201 });
@@ -78,9 +113,9 @@ export async function DELETE(req: NextRequest) {
 
     if (trainer._count.bookings > 0) {
       return NextResponse.json(
-        { 
-          error: "Cannot delete trainer with active bookings", 
-          bookingsCount: trainer._count.bookings 
+        {
+          error: "Cannot delete trainer with active bookings",
+          bookingsCount: trainer._count.bookings
         },
         { status: 409 }
       );
