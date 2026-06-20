@@ -1,11 +1,11 @@
 "use client";
 
-import { Hero } from "@/components/sections/hero";
+import { HeroSection } from "@/components/effects/hero-section-v2";
 
 export default function HomePage() {
   return (
     <main>
-      <Hero />
+      <HeroSection />
     </main>
   );
 }
