@@ -5,15 +5,13 @@ import { TrainerProfileStatus } from "@prisma/client";
 import { z } from "zod";
 
 const querySchema = z.object({
-  status: z.nativeEnum(TrainerProfileStatus).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
-  search: z.string().max(100).optional(),
 });
 
 /**
- * GET /api/admin/trainers
- * List all trainers with optional status filter and pagination.
+ * GET /api/admin/trainers/pending
+ * List only PENDING trainers for moderation queue.
  * Admin only.
  */
 export async function GET(request: NextRequest) {
@@ -22,10 +20,8 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const parsed = querySchema.safeParse({
-    status: searchParams.get("status") || undefined,
     page: searchParams.get("page") || "1",
     limit: searchParams.get("limit") || "20",
-    search: searchParams.get("search") || undefined,
   });
 
   if (!parsed.success) {
@@ -35,26 +31,15 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { status, page, limit, search } = parsed.data;
+  const { page, limit } = parsed.data;
   const skip = (page - 1) * limit;
-
-  const where: Record<string, unknown> = {};
-  if (status) where.status = status;
-  if (search) {
-    where.OR = [
-      { displayName: { contains: search, mode: "insensitive" } },
-      { firstName: { contains: search, mode: "insensitive" } },
-      { lastName: { contains: search, mode: "insensitive" } },
-      { slug: { contains: search, mode: "insensitive" } },
-    ];
-  }
 
   const [trainers, total] = await Promise.all([
     prisma.trainer.findMany({
-      where,
+      where: { status: TrainerProfileStatus.PENDING },
       skip,
       take: limit,
-      orderBy: { updatedAt: "desc" },
+      orderBy: { updatedAt: "asc" }, // oldest first = FIFO queue
       include: {
         user: {
           select: { id: true, name: true, email: true, image: true },
@@ -64,7 +49,7 @@ export async function GET(request: NextRequest) {
         },
       },
     }),
-    prisma.trainer.count({ where }),
+    prisma.trainer.count({ where: { status: TrainerProfileStatus.PENDING } }),
   ]);
 
   return NextResponse.json({

@@ -1,140 +1,137 @@
 import { z } from "zod";
+import { TrainerProfileStatus } from "@prisma/client";
 
-// ============================================
-// BASE TRAINER SCHEMA (admin creation)
-// ============================================
+// ─── Shared ──────────────────────────────────────────────
+
+export const slugSchema = z
+  .string()
+  .min(2, "Slug must be at least 2 characters")
+  .max(100, "Slug must be at most 100 characters")
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be URL-friendly (lowercase, hyphens only)");
+
+export const urlSchema = z
+  .string()
+  .url("Must be a valid URL")
+  .max(500, "URL too long")
+  .optional()
+  .or(z.literal(""));
+
+// ─── Backward-compatible base schemas (used by existing code) ─
+
 export const trainerSchema = z.object({
-  firstName: z.string()
-    .min(1, "First name is required")
-    .max(100, "First name must be less than 100 characters")
-    .trim(),
-  lastName: z.string()
-    .min(1, "Last name is required")
-    .max(100, "Last name must be less than 100 characters")
-    .trim(),
-  displayName: z.string()
-    .max(100)
-    .optional()
-    .or(z.literal("")),
-  slug: z.string()
-    .min(1, "Slug is required")
-    .max(100)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be URL-friendly (lowercase, hyphens only)")
-    .optional()
-    .or(z.literal("")),
-  headline: z.string()
-    .max(200, "Headline must be less than 200 characters")
-    .optional()
-    .or(z.literal("")),
-  bio: z.string()
-    .min(10, "Bio must be at least 10 characters")
-    .max(5000, "Bio must be less than 5000 characters")
-    .trim(),
-  bioHtml: z.string()
-    .max(10000, "HTML bio must be less than 10000 characters")
-    .optional()
-    .or(z.literal("")),
-  credentials: z.string()
-    .max(1000, "Credentials must be less than 1000 characters")
-    .optional()
-    .or(z.literal("")),
-  photoUrl: z.string()
-    .url("Photo URL must be a valid URL")
-    .max(1000, "URL is too long")
-    .optional()
-    .or(z.literal("")),
-  photos: z.array(z.string().url("Each photo must be a valid URL")).default([]),
-  videoUrl: z.string()
-    .url("Video URL must be valid")
-    .max(1000)
-    .optional()
-    .or(z.literal("")),
-  videoThumbnail: z.string()
-    .url("Thumbnail URL must be valid")
-    .max(1000)
-    .optional()
-    .or(z.literal("")),
-  instagramUrl: z.string()
-    .url("Instagram URL must be valid")
-    .max(1000)
-    .optional()
-    .or(z.literal("")),
-  tripsterUrl: z.string()
-    .url("Tripster URL must be valid")
-    .max(1000)
-    .optional()
-    .or(z.literal("")),
-  stravaUrl: z.string()
-    .url("Strava URL must be valid")
-    .max(1000)
-    .optional()
-    .or(z.literal("")),
-  websiteUrl: z.string()
-    .url("Website URL must be valid")
-    .max(1000)
-    .optional()
-    .or(z.literal("")),
-  specialties: z.array(z.string().trim().min(1)).default([]),
-  languages: z.array(z.string().trim().min(1)).default([]),
-  experienceYears: z.number().int().min(0).max(100).optional(),
-  maxClientsPerMonth: z.number().int().min(1).max(100).optional(),
-  isActive: z.boolean().default(true),
-  status: z.enum(["DRAFT", "PENDING", "PUBLISHED", "REJECTED", "SUSPENDED"]).default("DRAFT"),
-  moderationNote: z.string().max(2000).optional().or(z.literal("")),
+  firstName: z.string().min(1, "First name is required").max(100),
+  lastName: z.string().min(1, "Last name is required").max(100),
+  email: z.string().email("Invalid email").max(200),
+  photoUrl: z.string().url().max(500).optional().or(z.literal("")),
+  bio: z.string().max(5000).optional().or(z.literal("")),
+  specialties: z.array(z.string().max(50)).max(20).optional(),
+  languages: z.array(z.string().max(30)).max(10).optional(),
+  experienceYears: z.number().int().min(0).max(60).optional(),
+  rating: z.number().min(0).max(5).optional(),
 });
 
-// ============================================
-// TRAINER UPDATE SCHEMA (admin edits)
-// ============================================
-export const trainerUpdateSchema = trainerSchema.partial().extend({
-  id: z.string().cuid("Invalid trainer ID"),
+export const trainerUpdateSchema = z.object({
+  firstName: z.string().min(1).max(100).optional(),
+  lastName: z.string().min(1).max(100).optional(),
+  email: z.string().email().max(200).optional(),
+  photoUrl: z.string().url().max(500).optional().or(z.literal("")),
+  bio: z.string().max(5000).optional().or(z.literal("")),
+  specialties: z.array(z.string().max(50)).max(20).optional(),
+  languages: z.array(z.string().max(30)).max(10).optional(),
+  experienceYears: z.number().int().min(0).max(60).optional(),
+  rating: z.number().min(0).max(5).optional(),
 });
 
-// ============================================
-// TRAINER SELF-SERVICE SCHEMA (trainer dashboard)
-// Only fields trainers can edit themselves
-// ============================================
-export const trainerSelfServiceSchema = z.object({
-  displayName: z.string().max(100).optional().or(z.literal("")),
+// ─── Trainer Self-Service Update ───────────────────────────
+
+export const trainerSelfServiceUpdateSchema = z.object({
+  displayName: z.string().min(1, "Display name is required").max(100).optional(),
   headline: z.string().max(200).optional().or(z.literal("")),
-  bio: z.string().min(10).max(5000).trim(),
   bioHtml: z.string().max(10000).optional().or(z.literal("")),
-  credentials: z.string().max(1000).optional().or(z.literal("")),
-  photoUrl: z.string().url().max(1000).optional().or(z.literal("")),
-  photos: z.array(z.string().url()).max(10, "Maximum 10 photos allowed").default([]),
-  videoUrl: z.string().url().max(1000).optional().or(z.literal("")),
-  instagramUrl: z.string().url().max(1000).optional().or(z.literal("")),
-  tripsterUrl: z.string().url().max(1000).optional().or(z.literal("")),
-  stravaUrl: z.string().url().max(1000).optional().or(z.literal("")),
-  websiteUrl: z.string().url().max(1000).optional().or(z.literal("")),
-  specialties: z.array(z.string().trim().min(1)).max(10).default([]),
-  languages: z.array(z.string().trim().min(1)).max(10).default([]),
-  experienceYears: z.number().int().min(0).max(100).optional(),
+  bio: z.string().max(5000).optional().or(z.literal("")),
+  credentials: z.string().max(2000).optional().or(z.literal("")),
+  photoUrl: z.string().url().max(500).optional().or(z.literal("")),
+  photos: z.array(z.string().url().max(500)).max(20).optional(),
+  videoUrl: urlSchema,
+  videoThumbnail: urlSchema,
+  stravaUrl: urlSchema,
+  websiteUrl: urlSchema,
+  instagramUrl: urlSchema,
+  tripsterUrl: urlSchema,
+  specialties: z.array(z.string().max(50)).max(20).optional(),
+  languages: z.array(z.string().max(30)).max(10).optional(),
+  experienceYears: z.number().int().min(0).max(60).optional(),
   maxClientsPerMonth: z.number().int().min(1).max(100).optional(),
 });
 
-// ============================================
-// MODERATION SCHEMA (admin actions)
-// ============================================
-export const trainerModerationSchema = z.object({
-  action: z.enum(["approve", "reject", "suspend"]),
+export type TrainerSelfServiceUpdateInput = z.infer<typeof trainerSelfServiceUpdateSchema>;
+
+// ─── Trainer Submit for Moderation ───────────────────────
+
+export const trainerSubmitSchema = z.object({
+  confirm: z.literal(true, {
+    errorMap: () => ({ message: "You must confirm submission" }),
+  }),
+});
+
+// ─── Admin Moderation ────────────────────────────────────
+
+export const moderationActionSchema = z.object({
+  action: z.enum(["APPROVE", "REJECT", "SUSPEND"]),
   reason: z.string().max(2000).optional(),
 });
 
-// ============================================
-// AVAILABILITY SCHEMA
-// ============================================
-export const trainerAvailabilitySchema = z.object({
-  date: z.string().datetime(),
-  isAvailable: z.boolean().default(true),
-  note: z.string().max(500).optional().or(z.literal("")),
+export type ModerationActionInput = z.infer<typeof moderationActionSchema>;
+
+// ─── Admin Force Edit ────────────────────────────────────
+
+export const adminTrainerUpdateSchema = z.object({
+  displayName: z.string().min(1).max(100).optional(),
+  headline: z.string().max(200).optional().or(z.literal("")),
+  bioHtml: z.string().max(10000).optional().or(z.literal("")),
+  bio: z.string().max(5000).optional().or(z.literal("")),
+  credentials: z.string().max(2000).optional().or(z.literal("")),
+  photoUrl: z.string().url().max(500).optional().or(z.literal("")),
+  photos: z.array(z.string().url().max(500)).max(20).optional(),
+  videoUrl: urlSchema,
+  videoThumbnail: urlSchema,
+  stravaUrl: urlSchema,
+  websiteUrl: urlSchema,
+  instagramUrl: urlSchema,
+  tripsterUrl: urlSchema,
+  specialties: z.array(z.string().max(50)).max(20).optional(),
+  languages: z.array(z.string().max(30)).max(10).optional(),
+  experienceYears: z.number().int().min(0).max(60).optional(),
+  maxClientsPerMonth: z.number().int().min(1).max(100).optional(),
+  status: z.nativeEnum(TrainerProfileStatus).optional(),
+  slug: slugSchema.optional(),
 });
 
-// ============================================
-// TYPES
-// ============================================
-export type TrainerFormData = z.infer<typeof trainerSchema>;
-export type TrainerUpdateData = z.infer<typeof trainerUpdateSchema>;
-export type TrainerSelfServiceData = z.infer<typeof trainerSelfServiceSchema>;
-export type TrainerModerationData = z.infer<typeof trainerModerationSchema>;
-export type TrainerAvailabilityData = z.infer<typeof trainerAvailabilitySchema>;
+export type AdminTrainerUpdateInput = z.infer<typeof adminTrainerUpdateSchema>;
+
+// ─── Availability ────────────────────────────────────────
+
+export const availabilitySchema = z.object({
+  dates: z.array(
+    z.object({
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
+      isAvailable: z.boolean().default(true),
+      note: z.string().max(200).optional().or(z.literal("")),
+    })
+  ).max(365, "Cannot set more than 365 dates at once"),
+});
+
+export type AvailabilityInput = z.infer<typeof availabilitySchema>;
+
+// ─── Public Listing Filters ────────────────────────────────
+
+export const trainerListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(12),
+  specialty: z.string().max(50).optional(),
+  language: z.string().max(30).optional(),
+  sortBy: z.enum(["rating", "experience", "newest", "popular"]).default("rating"),
+  search: z.string().max(100).optional(),
+});
+
+export type TrainerListQuery = z.infer<typeof trainerListQuerySchema>;
