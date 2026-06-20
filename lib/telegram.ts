@@ -105,6 +105,67 @@ export async function sendBookingNotification(booking: {
   return sendTelegramMessage(ADMIN_GROUP_ID, text);
 }
 
+/**
+ * NEW: Notify admin when a trainer application is submitted
+ */
+export async function sendTrainerApplicationNotification(application: {
+  name: string;
+  email: string;
+  applicationId: string;
+  createdAt: Date;
+}): Promise<boolean> {
+  if (!ADMIN_GROUP_ID) return false;
+
+  const text = `🎓 <b>New Trainer Application!</b>
+
+👤 <b>Name:</b> ${escapeHtml(application.name)}
+📧 <b>Email:</b> ${escapeHtml(application.email)}
+
+🔗 <b>Application ID:</b> <code>${application.applicationId}</code>
+⏰ <b>Submitted:</b> ${formatDate(application.createdAt)}
+
+📝 <b>Action:</b> Review in admin panel → /admin/trainers`;
+
+  return sendTelegramMessage(ADMIN_GROUP_ID, text);
+}
+
+/**
+ * NEW: Notify admin when trainer status changes
+ */
+export async function sendTrainerStatusChangeNotification(trainer: {
+  displayName?: string | null;
+  firstName: string;
+  lastName: string;
+  slug: string;
+  status: string;
+}, oldStatus: string, adminName: string): Promise<boolean> {
+  if (!ADMIN_GROUP_ID) return false;
+
+  const displayName = trainer.displayName || `${trainer.firstName} ${trainer.lastName}`;
+
+  const statusEmojis: Record<string, string> = {
+    PUBLISHED: "✅",
+    REJECTED: "❌",
+    SUSPENDED: "🚫",
+    PENDING: "⏳",
+    DRAFT: "📝",
+  };
+
+  const text = `${statusEmojis[trainer.status] || "🔔"} <b>Trainer Status Changed</b>
+
+👤 <b>Trainer:</b> ${escapeHtml(displayName)}
+🔗 <b>Profile:</b> /trainers/${trainer.slug}
+
+📊 <b>Old Status:</b> ${oldStatus}
+📊 <b>New Status:</b> ${trainer.status}
+
+👨‍💼 <b>Changed by:</b> ${escapeHtml(adminName)}
+
+📝 <b>Action:</b> Review in admin panel`;
+
+  return sendTelegramMessage(ADMIN_GROUP_ID, text);
+}
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")

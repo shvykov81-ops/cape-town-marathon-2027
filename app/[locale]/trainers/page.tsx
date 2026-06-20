@@ -1,19 +1,10 @@
-import { getTranslations } from "next-intl/server";
 import { Metadata } from "next";
 import { TrainersContainer } from "@/components/trainers/trainers-container";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}): Promise<Metadata> {
-  const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "trainersPage.metadata" });
-  return {
-    title: t("title"),
-    description: t("description"),
-  };
-}
+export const metadata: Metadata = {
+  title: "Elite Running Coaches | Cape Town Marathon 2027",
+  description: "Train with world-class marathon coaches for the Cape Town Marathon 2027. Find your perfect coach.",
+};
 
 export default async function TrainersPage({
   params,
@@ -23,8 +14,8 @@ export default async function TrainersPage({
   const { locale } = await params;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <main className="min-h-screen bg-[#0a0a0f]">
       <TrainersContainer locale={locale} />
-    </div>
+    </main>
   );
 }

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/trainer-guard";
 import { moderationActionSchema } from "@/lib/validations/trainer";
 import { TrainerProfileStatus } from "@prisma/client";
+import { sendTrainerStatusChangeNotification } from "@/lib/telegram";
 
 /**
  * PATCH /api/admin/trainers/[id]/moderate
@@ -35,7 +36,10 @@ export async function PATCH(
 
   const { action, reason } = parsed.data;
 
-  const trainer = await prisma.trainer.findUnique({ where: { id } });
+  const trainer = await prisma.trainer.findUnique({ 
+    where: { id },
+    include: { user: { select: { name: true, email: true } } }
+  });
   if (!trainer) {
     return NextResponse.json({ error: "Trainer not found" }, { status: 404 });
   }
@@ -92,6 +96,26 @@ export async function PATCH(
         newValue: reason,
       },
     });
+  }
+
+  // Notify admin group via Telegram (non-blocking)
+  const admin = await prisma.user.findUnique({
+    where: { id: adminId },
+    select: { name: true, email: true },
+  });
+
+  if (admin) {
+    sendTrainerStatusChangeNotification(
+      {
+        displayName: trainer.displayName,
+        firstName: trainer.firstName,
+        lastName: trainer.lastName,
+        slug: trainer.slug,
+        status: newStatus,
+      },
+      oldStatus,
+      admin.name || admin.email
+    ).catch(console.error);
   }
 
   return NextResponse.json({

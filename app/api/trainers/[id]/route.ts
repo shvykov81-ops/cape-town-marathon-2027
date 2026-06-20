@@ -23,20 +23,20 @@ const getTrainerBySlug = unstable_cache(
     });
   },
   ["trainer-by-slug"],
-  { revalidate: 300 }
+  { revalidate: 300, tags: ["trainers"] }
 );
 
 /**
  * GET /api/trainers/[slug]
  * Public endpoint: get single trainer by slug.
- * Increments profileViews on each visit.
+ * Increments profileViews atomically.
  * No auth required.
  */
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { slug } = await params;
+  const { id: slug } = await params;
 
   const trainer = await getTrainerBySlug(slug);
 
@@ -52,13 +52,14 @@ export async function GET(
     );
   }
 
-  // Increment profileViews asynchronously (fire-and-forget)
-  prisma.trainer.update({
-    where: { id: trainer.id },
-    data: { profileViews: { increment: 1 } },
-  }).catch(() => {
+  // Increment profileViews atomically using raw query (no race condition)
+  // This runs independently of the cached data fetch
+  prisma.$executeRaw`
+    UPDATE "Trainer" SET "profileViews" = "profileViews" + 1 WHERE id = ${trainer.id}
+  `.catch(() => {
     // Silently fail — views are not critical
   });
 
+  // Return trainer data (views may be slightly stale due to cache, but that's acceptable)
   return NextResponse.json({ trainer });
 }

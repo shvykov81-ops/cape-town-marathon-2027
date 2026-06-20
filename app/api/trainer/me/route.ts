@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireTrainer } from "@/lib/auth/trainer-guard";
 import { TrainerProfileStatus } from "@prisma/client";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export async function GET() {
   const { error, trainer } = await requireTrainer();
@@ -39,6 +40,11 @@ export async function PATCH(request: NextRequest) {
   const updateData: Record<string, unknown> = {};
   for (const key of allowedFields) {
     if (body[key] !== undefined) updateData[key] = body[key];
+  }
+
+  // NEW: Sanitize bioHtml to prevent XSS
+  if (body.bioHtml !== undefined) {
+    updateData.bioHtml = sanitizeHtml(body.bioHtml);
   }
 
   const changes: { fieldName: string; oldValue: string | null; newValue: string | null }[] = [];

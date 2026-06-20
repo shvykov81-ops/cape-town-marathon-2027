@@ -1,79 +1,71 @@
 import { NextRequest, NextResponse } from "next/server";
-import { contactFormSchema } from "@/lib/validations/contact";
+import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { sendContactNotification } from "@/lib/telegram";
-import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+
+const contactSchema = z.object({
+  name: z.string().min(1, "Name is required").max(100),
+  email: z.string().email("Invalid email address").toLowerCase().trim(),
+  phone: z.string().max(20).optional().nullable(),
+  subject: z.enum(["GENERAL", "PREP_CAMP", "TRAINER", "PARTNERSHIP", "MEDIA"]),
+  message: z.string().min(10, "Message must be at least 10 characters").max(5000),
+  honeypot: z.string().optional(),
+});
 
 export async function POST(req: NextRequest) {
+  // Rate limiting: 5 submissions per minute per IP
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  if (!checkRateLimit(ip, "/api/contact")) {
+    return NextResponse.json(
+      { error: "Too many submissions. Please try again later." },
+      { status: 429 }
+    );
+  }
+
   try {
-    // Rate limiting
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
-    if (!checkRateLimit(ip, 5)) {
-      return NextResponse.json(
-        { error: "Too many requests. Please try again in a minute." },
-        { status: 429 }
-      );
-    }
-
     const body = await req.json();
+    const parsed = contactSchema.safeParse(body);
 
-    // Honeypot check
-    if (body.website && body.website.length > 0) {
-      return NextResponse.json({ success: true }, { status: 200 }); // Fake success
-    }
-
-    // Validation
-    const result = contactFormSchema.safeParse(body);
-    if (!result.success) {
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid input", details: result.error.flatten() },
+        { error: "Validation failed", details: parsed.error.flatten() },
         { status: 400 }
       );
     }
 
-    const { name, email, phone, subject, message } = result.data;
+    const { name, email, phone, subject, message, honeypot } = parsed.data;
 
-    // Save to database
+    // Honeypot check
+    if (honeypot) {
+      return NextResponse.json({ success: true });
+    }
+
     const contactMessage = await prisma.contactMessage.create({
       data: {
         name,
         email,
-        phone: phone || null,
+        phone,
         subject,
         message,
-        ipAddress: ip,
-        userAgent: req.headers.get("user-agent") || undefined,
-        source: "contact_page"
-      }
+      },
     });
 
-    // Send Telegram notification (async, non-blocking)
+    // Send Telegram notification (non-blocking)
     sendContactNotification({
       name,
       email,
-      phone: phone || null,
+      phone,
       subject,
       message,
-      createdAt: contactMessage.createdAt
-    }).then((sent) => {
-      if (sent) {
-        prisma.contactMessage.update({
-          where: { id: contactMessage.id },
-          data: { telegramSent: true }
-        }).catch(console.error);
-      }
-    }).catch(console.error);
+      createdAt: contactMessage.createdAt,
+    }).catch(() => {});
 
-    return NextResponse.json({
-      success: true,
-      messageId: contactMessage.id,
-      message: "Thank you! We'll get back to you within 24 hours."
-    });
-
-  } catch (error) {
-    console.error("Contact form error:", error);
+    return NextResponse.json({ success: true, id: contactMessage.id });
+  } catch (e) {
+    console.error("Contact form error:", e);
     return NextResponse.json(
-      { error: "Something went wrong. Please try again later." },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

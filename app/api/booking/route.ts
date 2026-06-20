@@ -12,11 +12,42 @@ const bookingSchema = z.object({
   raceCategory: z.string().optional(),
   participants: z.coerce.number().int().min(1).max(20).default(1),
   extras: z.array(z.string()).default([]),
-  totalAmount: z.coerce.number().min(0),
   checkInDate: z.string().min(1, "Check-in date is required"),
   checkOutDate: z.string().min(1, "Check-out date is required"),
   phone: z.string().optional(),
 });
+
+/**
+ * Calculate total price on the server side.
+ * NEVER trust client-side price calculation.
+ */
+async function calculateBookingTotal(
+  packageId: string,
+  extras: string[],
+  participants: number
+): Promise<number> {
+  const pkg = await prisma.package.findUnique({
+    where: { id: packageId },
+    include: { options: true },
+  });
+
+  if (!pkg) throw new Error("Package not found");
+
+  let total = parseFloat(String(pkg.priceBase));
+
+  // Add extras prices
+  for (const extraId of extras) {
+    const option = pkg.options.find((o) => o.id === extraId);
+    if (option) {
+      total += parseFloat(String(option.priceAdd));
+    }
+  }
+
+  // Multiply by participants
+  total *= participants;
+
+  return total;
+}
 
 export async function POST(req: NextRequest) {
   const user = await getAuthUser(req);
@@ -41,7 +72,6 @@ export async function POST(req: NextRequest) {
       raceCategory,
       participants,
       extras,
-      totalAmount,
       checkInDate,
       checkOutDate,
       phone,
@@ -86,8 +116,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const totalPrice =
-      parseFloat(String(totalAmount)) || parseFloat(String(pkg.priceBase));
+    // SERVER-SIDE PRICE CALCULATION — ignore client totalAmount
+    const totalPrice = await calculateBookingTotal(packageId, extras, participants);
 
     const booking = await prisma.booking.create({
       data: {
