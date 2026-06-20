@@ -9,8 +9,11 @@ import { Card, CardContent } from "@/components/ui/card";
 
 interface Trainer {
   id: string;
+  slug: string;
+  displayName: string | null;
   firstName: string;
   lastName: string;
+  headline: string | null;
   bio: string;
   credentials: string;
   photoUrl: string | null;
@@ -18,7 +21,6 @@ interface Trainer {
   reviewCount: number;
   specialties: string[];
   languages: string[];
-  isActive: boolean;
 }
 
 export function TrainersList() {
@@ -30,7 +32,12 @@ export function TrainersList() {
     fetch("/api/trainers")
       .then((r) => r.json())
       .then((data) => {
-        setTrainers(data);
+        // Phase 2 API returns { trainers, filters, stats, pagination }
+        setTrainers(data.trainers || []);
+        setLoading(false);
+      })
+      .catch(() => {
+        setTrainers([]);
         setLoading(false);
       });
   }, []);
@@ -58,10 +65,18 @@ export function TrainersList() {
     return t("reviews");
   };
 
+  const getDisplayName = (trainer: Trainer) => {
+    return trainer.displayName || `${trainer.firstName} ${trainer.lastName}`;
+  };
+
+  const getInitial = (trainer: Trainer) => {
+    return (trainer.displayName?.[0] || trainer.firstName[0] || "?").toUpperCase();
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {trainers.map((trainer) => (
-        <Link key={trainer.id} href={`/trainers/${trainer.id}`}>
+        <Link key={trainer.id} href={`/trainers/${trainer.slug}`}>
           <Card className="bg-white/5 border-white/10 hover:border-teal-500/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer h-full">
             <CardContent className="p-6">
               <div className="flex flex-col items-center text-center">
@@ -69,7 +84,7 @@ export function TrainersList() {
                   {trainer.photoUrl ? (
                     <Image
                       src={trainer.photoUrl}
-                      alt={`${trainer.firstName} ${trainer.lastName}`}
+                      alt={getDisplayName(trainer)}
                       fill
                       className="object-cover"
                       unoptimized
@@ -77,17 +92,20 @@ export function TrainersList() {
                   ) : (
                     <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
                       <span className="text-3xl font-bold text-teal-400">
-                        {trainer.firstName[0]}
+                        {getInitial(trainer)}
                       </span>
                     </div>
                   )}
                 </div>
 
                 <h3 className="text-xl font-bold mb-1">
-                  {trainer.firstName} {trainer.lastName}
+                  {getDisplayName(trainer)}
                 </h3>
+                {trainer.headline && (
+                  <p className="text-sm text-teal-400 mb-2">{trainer.headline}</p>
+                )}
                 <p className="text-sm text-neutral-400 mb-3 line-clamp-2">
-                  {trainer.credentials}
+                  {trainer.credentials || trainer.bio}
                 </p>
 
                 <div className="flex items-center gap-1 mb-3">
@@ -117,10 +135,12 @@ export function TrainersList() {
                   ))}
                 </div>
 
-                <div className="flex items-center gap-1 text-xs text-neutral-500">
-                  <Languages className="w-3 h-3" />
-                  {trainer.languages.join(", ")}
-                </div>
+                {trainer.languages && trainer.languages.length > 0 && (
+                  <div className="flex items-center gap-1 text-xs text-neutral-500">
+                    <Languages className="w-3 h-3" />
+                    {trainer.languages.join(", ")}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
