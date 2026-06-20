@@ -6,12 +6,42 @@ import { ChevronDown, Play } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
-import { WebGLGrain } from "@/components/effects/webgl-grain";
+import dynamic from "next/dynamic";
 import { KineticHeadline } from "@/components/effects/kinetic-typography";
-import { AnimatedCounter } from "@/components/effects/animated-counter";
+
+// Dynamic import WebGLGrain to avoid SSR issues
+const WebGLGrain = dynamic(
+  () => import("@/components/effects/webgl-grain").then((mod) => mod.WebGLGrain),
+  { ssr: false }
+);
+
+function AnimatedCounter({ target, suffix = "", className = "" }: { target: number; suffix?: string; className?: string }) {
+  const [count, setCount] = React.useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true });
+
+  React.useEffect(() => {
+    if (!isInView) return;
+    let startTime: number;
+    const duration = 2000;
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * target));
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }, [isInView, target]);
+
+  return <span ref={ref} className={className}>{count.toLocaleString()}{suffix}</span>;
+}
+
+import React, { useState, useEffect } from "react";
+import { useInView } from "framer-motion";
 
 export function HeroSection() {
-    const containerRef = useRef(null);
+    const containerRef = useRef<HTMLElement>(null);
     const { scrollYProgress } = useScroll({
         target: containerRef,
         offset: ["start start", "end start"],
@@ -41,15 +71,15 @@ export function HeroSection() {
                         muted
                         loop
                         playsInline
+                        preload="auto"
                         className="absolute inset-0 w-full h-full object-cover"
-                        poster="/images/hero-fallback.jpg"
                     >
                         <source src="/videos/hero.mp4" type="video/mp4" />
                     </video>
                     <div className="absolute inset-0 bg-black/50" />
                 </motion.div>
 
-                {/* WebGL grain */}
+                {/* WebGL grain - client-side only */}
                 <WebGLGrain />
 
                 {/* Vignette */}
@@ -126,15 +156,15 @@ export function HeroSection() {
                         className="flex gap-8 sm:gap-12 mt-16"
                     >
                         <div className="text-center">
-                            <AnimatedCounter target={42} suffix=".2km" className="text-2xl sm:text-3xl font-bold text-teal-400" />
+                            <span className="text-2xl sm:text-3xl font-bold text-teal-400">42.2km</span>
                             <div className="text-sm text-neutral-500 mt-1">{t("statDistance")}</div>
                         </div>
                         <div className="text-center">
-                            <AnimatedCounter target={500} suffix="+" className="text-2xl sm:text-3xl font-bold text-teal-400" />
+                            <span className="text-2xl sm:text-3xl font-bold text-teal-400">500+</span>
                             <div className="text-sm text-neutral-500 mt-1">{t("statRunners")}</div>
                         </div>
                         <div className="text-center">
-                            <AnimatedCounter target={12} className="text-2xl sm:text-3xl font-bold text-teal-400" />
+                            <span className="text-2xl sm:text-3xl font-bold text-teal-400">12</span>
                             <div className="text-sm text-neutral-500 mt-1">{t("statCoaches")}</div>
                         </div>
                     </motion.div>
