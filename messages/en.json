@@ -1123,5 +1123,68 @@
       "saved": "Settings saved successfully",
       "saveError": "Failed to save settings"
     }
+  },
+  "adminModeration": {
+    "list": {
+      "allTab": "All",
+      "pendingTab": "Pending",
+      "publishedTab": "Published",
+      "rejectedTab": "Rejected",
+      "suspendedTab": "Suspended",
+      "draftTab": "Draft",
+      "searchPlaceholder": "Search trainers...",
+      "colTrainer": "Trainer",
+      "colStatus": "Status",
+      "colRating": "Rating",
+      "colSpecialties": "Specialties",
+      "colStats": "Stats",
+      "colActions": "Actions",
+      "noTrainers": "No trainers found"
+    },
+    "action": {
+      "approve": "Approve",
+      "approveDesc": "Publish profile to public listing",
+      "reject": "Reject",
+      "rejectDesc": "Send back for revision with note",
+      "suspend": "Suspend",
+      "suspendDesc": "Hide profile from public view",
+      "current": "Current",
+      "cancel": "Cancel",
+      "deleteConfirm": "Are you sure you want to delete this trainer profile? This action cannot be undone."
+    },
+    "moderation": {
+      "title": "Moderation Actions",
+      "reasonLabel": "Reason (required for Reject / Suspend)",
+      "reasonPlaceholder": "Enter reason for this action...",
+      "confirm": "Confirm"
+    },
+    "history": {
+      "title": "Change History",
+      "noChanges": "No changes recorded yet",
+      "before": "Before",
+      "after": "After"
+    },
+    "tabs": {
+      "moderation": "Moderation",
+      "history": "History",
+      "reviews": "Reviews"
+    },
+    "detail": {
+      "about": "About",
+      "credentials": "Credentials",
+      "details": "Details",
+      "experience": "Experience",
+      "maxClients": "Max Clients",
+      "languages": "Languages",
+      "specialties": "Specialties",
+      "bookingInquiries": "Booking Inquiries",
+      "owner": "Profile Owner",
+      "links": "Links",
+      "website": "Website",
+      "moderationNote": "Moderation Note"
+    },
+    "reviews": {
+      "noReviews": "No reviews yet"
+    }
   }
 }

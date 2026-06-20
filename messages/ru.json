@@ -1123,5 +1123,68 @@
       "saved": "Настройки сохранены",
       "saveError": "Не удалось сохранить настройки"
     }
+  },
+  "adminModeration": {
+    "list": {
+      "allTab": "Все",
+      "pendingTab": "На проверке",
+      "publishedTab": "Опубликованы",
+      "rejectedTab": "Отклонены",
+      "suspendedTab": "Приостановлены",
+      "draftTab": "Черновики",
+      "searchPlaceholder": "Поиск тренеров...",
+      "colTrainer": "Тренер",
+      "colStatus": "Статус",
+      "colRating": "Рейтинг",
+      "colSpecialties": "Специализации",
+      "colStats": "Статистика",
+      "colActions": "Действия",
+      "noTrainers": "Тренеры не найдены"
+    },
+    "action": {
+      "approve": "Одобрить",
+      "approveDesc": "Опубликовать профиль в общем списке",
+      "reject": "Отклонить",
+      "rejectDesc": "Вернуть на доработку с комментарием",
+      "suspend": "Приостановить",
+      "suspendDesc": "Скрыть профиль из публичного доступа",
+      "current": "Текущий",
+      "cancel": "Отмена",
+      "deleteConfirm": "Вы уверены, что хотите удалить профиль тренера? Это действие нельзя отменить."
+    },
+    "moderation": {
+      "title": "Действия модерации",
+      "reasonLabel": "Причина (обязательно для Отклонить / Приостановить)",
+      "reasonPlaceholder": "Введите причину действия...",
+      "confirm": "Подтвердить"
+    },
+    "history": {
+      "title": "История изменений",
+      "noChanges": "Изменений пока нет",
+      "before": "До",
+      "after": "После"
+    },
+    "tabs": {
+      "moderation": "Модерация",
+      "history": "История",
+      "reviews": "Отзывы"
+    },
+    "detail": {
+      "about": "О тренере",
+      "credentials": "Квалификация",
+      "details": "Детали",
+      "experience": "Опыт",
+      "maxClients": "Макс. клиентов",
+      "languages": "Языки",
+      "specialties": "Специализации",
+      "bookingInquiries": "Запросы на бронирование",
+      "owner": "Владелец профиля",
+      "links": "Ссылки",
+      "website": "Сайт",
+      "moderationNote": "Примечание модератора"
+    },
+    "reviews": {
+      "noReviews": "Отзывов пока нет"
+    }
   }
 }
