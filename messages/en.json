@@ -639,8 +639,9 @@
       "description": "Meet our certified marathon trainers and guides for Cape Town Marathon 2027"
     },
     "hero": {
-      "title": "Our Trainers",
-      "subtitle": "Certified marathon coaches and local guides who will prepare you for Cape Town Marathon 2027 and show you the best of South Africa."
+      "title": "Meet Your Coach",
+      "subtitle": "World-class running coaches ready to prepare you for Cape Town Marathon 2027",
+      "badge": "Elite Team"
     },
     "list": {
       "loading": "Loading trainers...",
@@ -662,6 +663,43 @@
       "bookWith": "Book with",
       "instagram": "Instagram",
       "tripster": "Tripster"
+    },
+    "stats": {
+      "coaches": "Coaches",
+      "specialties": "Specialties",
+      "languages": "Languages",
+      "avg_rating": "Avg Rating"
+    },
+    "filters": {
+      "search_placeholder": "Search by name or specialty...",
+      "all": "All",
+      "sort_by": "Sort by",
+      "sort_rating": "Rating",
+      "sort_experience": "Experience",
+      "sort_newest": "Newest",
+      "sort_popular": "Popular",
+      "specialties": "Specialties",
+      "languages": "Languages",
+      "filters": "Filters",
+      "clear": "Clear filters"
+    },
+    "grid": {
+      "showing": "Showing {count} coaches",
+      "noResults": "No coaches found matching your criteria"
+    },
+    "card": {
+      "featured": "Featured",
+      "years": "years",
+      "reviews": "reviews",
+      "views": "views",
+      "viewProfile": "View Profile",
+      "bookSession": "Book Session"
+    },
+    "loadMore": "Load More",
+    "cta": {
+      "title": "Are you a coach?",
+      "subtitle": "Join our team of elite running coaches and help athletes achieve their goals",
+      "button": "Apply as Coach"
     }
   },
   "capeTownGuide": {
