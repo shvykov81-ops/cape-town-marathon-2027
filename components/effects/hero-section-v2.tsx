@@ -1,44 +1,95 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 import { ChevronDown, Play } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
-import dynamic from "next/dynamic";
 import { KineticHeadline } from "@/components/effects/kinetic-typography";
 
-// Dynamic import WebGLGrain to avoid SSR issues
-const WebGLGrain = dynamic(
-  () => import("@/components/effects/webgl-grain").then((mod) => mod.WebGLGrain),
-  { ssr: false }
-);
+// Client-only WebGL grain wrapper
+function WebGLGrainClient() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef<number>(0);
 
-function AnimatedCounter({ target, suffix = "", className = "" }: { target: number; suffix?: string; className?: string }) {
-  const [count, setCount] = React.useState(0);
-  const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true });
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const gl = canvas.getContext("webgl", { premultipliedAlpha: true, alpha: true });
+    if (!gl) return;
 
-  React.useEffect(() => {
-    if (!isInView) return;
-    let startTime: number;
-    const duration = 2000;
-    const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const progress = Math.min((timestamp - startTime) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setCount(Math.floor(eased * target));
-      if (progress < 1) requestAnimationFrame(animate);
+    const vertexShaderSrc = `attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+    const fragmentShaderSrc = `precision highp float;uniform float u_time;uniform vec2 u_resolution;uniform float u_grainIntensity;uniform float u_vignetteIntensity;uniform vec3 u_tintColor;uniform float u_tintIntensity;float random(vec2 st){return fract(sin(dot(st.xy,vec2(12.9898,78.233)))*43758.5453123);}void main(){vec2 st=gl_FragCoord.xy/u_resolution.xy;float grain=random(st+u_time*0.01)*u_grainIntensity;vec2 center=st-0.5;float vignette=1.0-dot(center,center)*u_vignetteIntensity;vignette=smoothstep(0.0,1.0,vignette);vec3 tint=u_tintColor*u_tintIntensity*(0.5+0.5*sin(st.x*3.14+u_time*0.2));vec3 color=vec3(grain)*vignette+tint*(1.0-vignette*0.5);float alpha=u_grainIntensity*0.4+u_tintIntensity*0.15;gl_FragColor=vec4(color,alpha);}`;
+
+    const compile = (type: number, source: string) => {
+      const shader = gl.createShader(type)!;
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      return shader;
     };
-    requestAnimationFrame(animate);
-  }, [isInView, target]);
 
-  return <span ref={ref} className={className}>{count.toLocaleString()}{suffix}</span>;
+    const program = gl.createProgram()!;
+    gl.attachShader(program, compile(gl.VERTEX_SHADER, vertexShaderSrc));
+    gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fragmentShaderSrc));
+    gl.linkProgram(program);
+    gl.useProgram(program);
+
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+
+    const position = gl.getAttribLocation(program, "position");
+    gl.enableVertexAttribArray(position);
+    gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+
+    const uTime = gl.getUniformLocation(program, "u_time");
+    const uRes = gl.getUniformLocation(program, "u_resolution");
+    const uGrain = gl.getUniformLocation(program, "u_grainIntensity");
+    const uVignette = gl.getUniformLocation(program, "u_vignetteIntensity");
+    const uTint = gl.getUniformLocation(program, "u_tintColor");
+    const uTintInt = gl.getUniformLocation(program, "u_tintIntensity");
+
+    gl.uniform1f(uGrain, 0.12);
+    gl.uniform1f(uVignette, 2.5);
+    gl.uniform3f(uTint, 0.078, 0.722, 0.651);
+    gl.uniform1f(uTintInt, 0.08);
+
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio, 2);
+      canvas.width = canvas.clientWidth * dpr;
+      canvas.height = canvas.clientHeight * dpr;
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.uniform2f(uRes, canvas.width, canvas.height);
+    };
+
+    resize();
+    window.addEventListener("resize", resize);
+
+    const start = performance.now();
+    const render = () => {
+      gl.uniform1f(uTime, (performance.now() - start) * 0.001);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      rafRef.current = requestAnimationFrame(render);
+    };
+    render();
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      window.removeEventListener("resize", resize);
+      gl.deleteProgram(program);
+      gl.deleteBuffer(buffer);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      style={{ mixBlendMode: "overlay", zIndex: 10 }}
+    />
+  );
 }
-
-import React, { useState, useEffect } from "react";
-import { useInView } from "framer-motion";
 
 export function HeroSection() {
     const containerRef = useRef<HTMLElement>(null);
@@ -63,9 +114,12 @@ export function HeroSection() {
 
     return (
         <section ref={containerRef} className="relative h-[200vh]">
-            <div className="sticky top-0 h-screen overflow-hidden">
-                {/* Video background */}
-                <motion.div style={{ opacity: videoProgress }} className="absolute inset-0">
+            <div className="sticky top-0 h-screen overflow-hidden bg-[#0a0a0f]">
+                {/* Video background - absolute positioned */}
+                <motion.div 
+                    style={{ opacity: videoProgress }} 
+                    className="absolute inset-0 z-0"
+                >
                     <video
                         autoPlay
                         muted
@@ -76,19 +130,21 @@ export function HeroSection() {
                     >
                         <source src="/videos/hero.mp4" type="video/mp4" />
                     </video>
-                    <div className="absolute inset-0 bg-black/50" />
                 </motion.div>
 
-                {/* WebGL grain - client-side only */}
-                <WebGLGrain />
+                {/* Dark overlay for text readability */}
+                <div className="absolute inset-0 bg-black/50 z-[5]" />
+
+                {/* WebGL grain - client only */}
+                <WebGLGrainClient />
 
                 {/* Vignette */}
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.6)_100%)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.6)_100%)] z-[15]" />
 
                 {/* Content */}
                 <motion.div
                     style={{ opacity, scale, y }}
-                    className="relative z-10 h-full flex flex-col items-center justify-center px-4 text-center"
+                    className="relative z-20 h-full flex flex-col items-center justify-center px-4 text-center"
                 >
                     {/* Badge */}
                     <motion.div
