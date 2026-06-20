@@ -1021,5 +1021,107 @@
         "date": "2027-04-01"
       }
     ]
+  },
+  "trainerDashboard": {
+    "metadata": {
+      "title": "Trainer Dashboard — RUN & Travel",
+      "description": "Manage your trainer profile, photos, availability, and settings"
+    },
+    "nav": {
+      "brand": "Trainer Hub",
+      "subtitle": "Cape Town Marathon 2027",
+      "overview": "Overview",
+      "profile": "Profile",
+      "photos": "Photos",
+      "calendar": "Calendar",
+      "settings": "Settings"
+    },
+    "status": {
+      "label": "Profile Status",
+      "draft": "Draft",
+      "pending": "Pending Review",
+      "published": "Published",
+      "rejected": "Rejected",
+      "suspended": "Suspended"
+    },
+    "overview": {
+      "greeting": "Hello, {name}",
+      "subtitle": "Here's how your profile is performing",
+      "views": "Profile Views",
+      "inquiries": "Booking Inquiries",
+      "rating": "Rating",
+      "bookings": "Total Bookings",
+      "noProfile": "Trainer profile not found. Please contact support.",
+      "draftTitle": "Your profile is in draft mode",
+      "draftDesc": "Complete your profile and submit it for review to go live.",
+      "editProfile": "Edit Profile",
+      "rejectedTitle": "Your profile was rejected",
+      "editAndResubmit": "Edit & Resubmit",
+      "pendingTitle": "Profile under review",
+      "pendingDesc": "Our team is reviewing your profile. You'll be notified once it's approved.",
+      "publishedTitle": "Profile published!",
+      "publishedDesc": "Your profile went live on {date}.",
+      "viewPublic": "View Public Profile",
+      "quickActions": "Quick Actions",
+      "actionProfile": "Edit Profile",
+      "actionProfileDesc": "Update your bio, photo, and specialties",
+      "actionPhotos": "Manage Photos",
+      "actionPhotosDesc": "Upload and organize your gallery",
+      "actionCalendar": "Set Availability",
+      "actionCalendarDesc": "Mark dates when you're available"
+    },
+    "profile": {
+      "title": "Profile Editor",
+      "subtitle": "Edit your trainer profile information",
+      "saveDraft": "Save Draft",
+      "submitForReview": "Submit for Review",
+      "saved": "Profile saved successfully",
+      "saveError": "Failed to save profile",
+      "submitted": "Profile submitted for review",
+      "submitError": "Failed to submit profile",
+      "noProfile": "Profile not found",
+      "pendingWarning": "Your profile is pending review. Editing is disabled.",
+      "photoUrl": "Profile Photo URL",
+      "displayName": "Display Name",
+      "headline": "Headline",
+      "bio": "Bio",
+      "bioPlaceholder": "Tell athletes about your coaching philosophy, experience, and approach...",
+      "bioHint": "Plain text bio (HTML editor coming soon)",
+      "credentials": "Credentials",
+      "specialties": "Specialties",
+      "languages": "Languages",
+      "commaSeparated": "Comma separated",
+      "experienceYears": "Years of Experience",
+      "maxClients": "Max Clients Per Month",
+      "videoUrl": "Welcome Video URL"
+    },
+    "photos": {
+      "title": "Photo Gallery",
+      "subtitle": "Manage your trainer photo gallery (max 20 photos)",
+      "add": "Add Photo",
+      "placeholder": "https://example.com/photo.jpg",
+      "empty": "No photos yet. Add your first photo above.",
+      "readOnly": "Photo editing is disabled while profile is under review."
+    },
+    "calendar": {
+      "title": "Availability Calendar",
+      "subtitle": "Set your available dates for bookings",
+      "available": "Available",
+      "busy": "Busy",
+      "noData": "Not set",
+      "readOnly": "Calendar editing is disabled while profile is under review."
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Manage your social links and preferences",
+      "socialLinks": "Social Links",
+      "strava": "Strava",
+      "website": "Website",
+      "instagram": "Instagram",
+      "tripster": "Tripster",
+      "save": "Save Settings",
+      "saved": "Settings saved successfully",
+      "saveError": "Failed to save settings"
+    }
   }
 }
