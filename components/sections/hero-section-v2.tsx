@@ -6,9 +6,9 @@ import { ChevronDown, Play } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
-import { WebGLGrain } from "./webgl-grain";
-import { KineticHeadline } from "./kinetic-typography";
-import { AnimatedCounter } from "./animated-counter";
+import { WebGLGrain } from "@/components/effects/webgl-grain";
+import { KineticHeadline } from "@/components/effects/kinetic-typography";
+import { AnimatedCounter } from "@/components/effects/animated-counter";
 
 export function HeroSection() {
     const containerRef = useRef(null);
