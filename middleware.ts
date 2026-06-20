@@ -1,4 +1,3 @@
-﻿// middleware.ts — ИСПРАВЛЕННАЯ ВЕРСИЯ
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { auth } from "@/auth";
@@ -24,20 +23,22 @@ const SKIP_RATE_LIMIT_PATHS = [
   "/api/checklist",
 ];
 
+// Static assets that should NEVER be locale-redirected
+const STATIC_PATHS = [
+  "/images/",
+  "/uploads/",
+  "/manifest.json",
+  "/favicon.ico",
+  "/favicon.png",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/_next/",
+  "/api/",
+];
+
 function getLocale(request: NextRequest): string {
-  const negotiatorHeaders: Record<string, string> = {};
-  request.headers.forEach((value, key) => (negotiatorHeaders[key] = value));
-
-  // Check for locale in pathname first
-  const pathnameLocale = locales.find(
-    (l) => request.nextUrl.pathname.startsWith(`/${l}/`) || request.nextUrl.pathname === `/${l}`
-  );
-  if (pathnameLocale) return pathnameLocale;
-
-  // Check accept-language header
   const acceptLang = request.headers.get("accept-language")?.split(",")[0]?.split("-")[0];
   if (acceptLang && locales.includes(acceptLang as any)) return acceptLang;
-
   return defaultLocale;
 }
 
@@ -45,31 +46,34 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 
-  // ====== LOCALE REDIRECT / REWRITE ======
+  // ====== SKIP STATIC ASSETS & API ======
+  if (STATIC_PATHS.some((path) => pathname.startsWith(path))) {
+    return NextResponse.next();
+  }
+
+  // ====== LOCALE REDIRECT ======
   const pathnameHasLocale = locales.some(
     (l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`
   );
 
-  if (!pathnameHasLocale && !pathname.startsWith("/api/") && !pathname.startsWith("/_next/") && !pathname.startsWith("/favicon") && !pathname.startsWith("/robots") && !pathname.startsWith("/sitemap")) {
-    // Redirect / → /en or /ru based on browser language
+  if (!pathnameHasLocale) {
     const locale = getLocale(request);
     const newUrl = new URL(`/${locale}${pathname}`, request.url);
     return NextResponse.redirect(newUrl);
   }
-  // =======================================
 
-  // Skip rate limiting for high-frequency legitimate endpoints
-  if (SKIP_RATE_LIMIT_PATHS.some((path) => pathname.startsWith(path))) {
-    return NextResponse.next();
-  }
-
-  // Apply rate limiting for protected endpoints
-  if (RATE_LIMITED_PATHS.some((path) => pathname.startsWith(path))) {
-    if (!checkRateLimit(ip, pathname)) {
-      return NextResponse.json(
-        { error: "Too many requests. Please try again later." },
-        { status: 429 }
-      );
+  // ====== RATE LIMITING (only for API routes) ======
+  if (pathname.startsWith("/api/")) {
+    if (SKIP_RATE_LIMIT_PATHS.some((path) => pathname.startsWith(path))) {
+      return NextResponse.next();
+    }
+    if (RATE_LIMITED_PATHS.some((path) => pathname.startsWith(path))) {
+      if (!checkRateLimit(ip, pathname)) {
+        return NextResponse.json(
+          { error: "Too many requests. Please try again later." },
+          { status: 429 }
+        );
+      }
     }
   }
 
@@ -78,7 +82,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/api/:path*",
     "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
   ],
 };

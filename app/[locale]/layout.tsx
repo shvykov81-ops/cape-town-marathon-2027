@@ -6,26 +6,25 @@ import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 
 export default async function LocaleLayout({
-    children,
-    params,
+  children,
+  params,
 }: {
-    children: React.ReactNode;
-    params: Promise<{ locale: string }>;
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }) {
-    const { locale } = await params;
+  const { locale } = await params;
 
-    if (!locales.includes(locale as Locale)) {
-        notFound();
-    }
+  if (!locales.includes(locale as Locale)) {
+    notFound();
+  }
 
-    // ✅ Передаём locale в getMessages()
-    const messages = await getMessages({ locale });
+  const messages = await getMessages({ locale });
 
-    return (
-        <NextIntlClientProvider messages={messages} locale={locale}>
-            <Navigation />
-            {children}
-            <Footer />
-        </NextIntlClientProvider>
-    );
+  return (
+    <NextIntlClientProvider messages={messages} locale={locale}>
+      <Navigation />
+      <main className="min-h-screen">{children}</main>
+      <Footer />
+    </NextIntlClientProvider>
+  );
 }
