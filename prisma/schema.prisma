@@ -90,6 +90,7 @@ model User {
   notifications    Notification[]
   blogPosts        BlogPost[]
   trainerProfile   Trainer?         @relation("UserTrainer")
+  trainerApplications TrainerApplication[]
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
@@ -416,3 +417,21 @@ model TelegramLog {
   @@index([chatId])
   @@index([createdAt])
 }
+
+enum TrainerApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model TrainerApplication {
+  id        String                   @id @default(cuid())
+  userId    String                   @unique
+  user      User                     @relation(fields: [userId], references: [id])
+  status    TrainerApplicationStatus @default(PENDING)
+  note      String?                  @db.Text
+  createdAt DateTime                 @default(now())
+  updatedAt DateTime                 @updatedAt
+}
+
+
