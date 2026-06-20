@@ -39,7 +39,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role as "user" | "admin",
+          role: user.role as "user" | "admin" | "trainer",
         };
       },
     }),
@@ -56,7 +56,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // Не используем Object.assign — прямое присваивание свойств
       if (token && session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as "user" | "admin";
+        session.user.role = token.role as "user" | "admin" | "trainer";
       }
       return session;
     },

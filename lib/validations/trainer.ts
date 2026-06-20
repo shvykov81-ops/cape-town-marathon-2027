@@ -42,6 +42,23 @@ export const trainerUpdateSchema = z.object({
   rating: z.number().min(0).max(5).optional(),
 });
 
+// ─── Trainer Profile Interface (for frontend use) ─────────
+
+export interface TrainerProfile {
+  id: string;
+  displayName: string | null;
+  headline: string | null;
+  bio: string | null;
+  credentials: string | null;
+  specialties: string[];
+  languages: string[];
+  experienceYears: number | null;
+  maxClientsPerMonth: number | null;
+  videoUrl: string | null;
+  photoUrl: string | null;
+  status: string;
+}
+
 // ─── Trainer Self-Service Update ───────────────────────────
 
 export const trainerSelfServiceUpdateSchema = z.object({
