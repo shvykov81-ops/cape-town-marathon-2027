@@ -1,15 +1,23 @@
 import { MetadataRoute } from "next";
+import { prisma } from "@/lib/prisma";
+import { TrainerProfileStatus } from "@prisma/client";
 
 const BASE_URL = "https://cape-town-marathon-2027.vercel.app";
 
-// Static routes for both locales
-const staticRoutes = [
-  "", "/trainers", "/about-race", "/booking", "/contact", "/pricing",
-  "/prep-camp", "/cape-town-guide", "/race-week", "/blog", "/faq",
-  "/terms", "/privacy", "/refund", "/cookies",
-];
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Get all published trainers
+  const trainers = await prisma.trainer.findMany({
+    where: { status: TrainerProfileStatus.PUBLISHED },
+    select: { slug: true, updatedAt: true },
+  });
+
+  // Static routes for both locales
+  const staticRoutes = [
+    "", "/trainers", "/about-race", "/booking", "/contact", "/pricing",
+    "/prep-camp", "/cape-town-guide", "/race-week", "/blog", "/faq",
+    "/terms", "/privacy", "/refund", "/cookies",
+  ];
+
   const sitemapEntries: MetadataRoute.Sitemap = [];
 
   // Add static routes for EN and RU
@@ -24,17 +32,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  // NOTE: Trainer profiles are commented out because they require DB access
-  // which is blocked by VPN during build. Uncomment after deployment.
-  /*
-  const { prisma } = await import("@/lib/prisma");
-  const { TrainerProfileStatus } = await import("@prisma/client");
-
-  const trainers = await prisma.trainer.findMany({
-    where: { status: TrainerProfileStatus.PUBLISHED },
-    select: { slug: true, updatedAt: true },
-  });
-
+  // Add trainer profiles for both locales
   for (const locale of ["en", "ru"]) {
     for (const trainer of trainers) {
       sitemapEntries.push({
@@ -45,7 +43,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
     }
   }
-  */
 
   return sitemapEntries;
 }
