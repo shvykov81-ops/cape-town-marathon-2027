@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 import { ChevronDown, Play } from "lucide-react";
 import Link from "next/link";
@@ -11,7 +11,11 @@ import { KineticHeadline } from "./kinetic-typography";
 import { AnimatedCounter } from "./animated-counter";
 
 export function HeroSection() {
-    const containerRef = useRef(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [videoError, setVideoError] = useState(false);
+    const [videoLoaded, setVideoLoaded] = useState(false);
+
     const { scrollYProgress } = useScroll({
         target: containerRef,
         offset: ["start start", "end start"],
@@ -31,22 +35,69 @@ export function HeroSection() {
 
     const videoProgress = useTransform(smoothProgress, [0, 1], [0, 1]);
 
+    // Обработка загрузки и ошибок видео
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        const handleCanPlay = () => setVideoLoaded(true);
+        const handleError = () => {
+            console.warn("[Hero] Video failed to load — using poster fallback");
+            setVideoError(true);
+        };
+
+        video.addEventListener("canplay", handleCanPlay);
+        video.addEventListener("error", handleError);
+
+        // Принудительная загрузка
+        video.load();
+
+        return () => {
+            video.removeEventListener("canplay", handleCanPlay);
+            video.removeEventListener("error", handleError);
+        };
+    }, []);
+
+    const showPoster = videoError || !videoLoaded;
+
     return (
         <section ref={containerRef} className="relative h-[200vh]">
             <div className="sticky top-0 h-screen overflow-hidden">
                 {/* Video background */}
                 <motion.div style={{ opacity: videoProgress }} className="absolute inset-0">
+                    {/* Poster fallback — пока видео грузится или при ошибке */}
+                    <div
+                        className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000"
+                        style={{
+                            backgroundImage: "url('/images/hero-runners.jpg')",
+                            opacity: showPoster ? 1 : 0,
+                        }}
+                    />
+
                     <video
+                        ref={videoRef}
                         autoPlay
                         muted
                         loop
                         playsInline
                         preload="auto"
-                        className="absolute inset-0 w-full h-full object-cover"
-                        poster="/images/hero-fallback.jpg"
+                        poster="/images/hero-runners.jpg"
+                        className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
+                        style={{ opacity: videoLoaded ? 1 : 0 }}
                     >
+                        {/* WebM — primary, в 3-5 раз меньше MP4 */}
+                        <source src="/videos/hero.webm" type="video/webm" />
+                        {/* MP4 — fallback */}
                         <source src="/videos/hero.mp4" type="video/mp4" />
+                        {/* CDN fallback, если local файлы недоступны (Vercel > 4.5MB) */}
+                        {process.env.NEXT_PUBLIC_VIDEO_CDN_URL && (
+                            <source
+                                src={process.env.NEXT_PUBLIC_VIDEO_CDN_URL}
+                                type="video/mp4"
+                            />
+                        )}
                     </video>
+
                     <div className="absolute inset-0 bg-black/50" />
                 </motion.div>
 
