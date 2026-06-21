@@ -12,7 +12,6 @@ const nextConfig = withNextIntl({
       "res.cloudinary.com",
     ],
   },
-  // Headers для кеширования видео и безопасности
   async headers() {
     return [
       {
