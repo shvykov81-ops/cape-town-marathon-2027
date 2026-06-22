@@ -22,7 +22,7 @@ export function RoleSwitcher() {
   const currentRole = session.user.role;
   const originalRole = (session.user as any).originalRole || currentRole;
 
-  // Determine available roles
+  // Determine available roles based on originalRole
   const availableRoles: Array<{ role: string; label: string; icon: React.ElementType; href: string }> = [];
 
   if (originalRole === "admin") {
@@ -58,8 +58,7 @@ export function RoleSwitcher() {
         return;
       }
 
-      // 2. Update client session (triggers JWT callback)
-      // This ensures middleware sees the new role immediately
+      // 2. Update client session (triggers JWT callback with trigger: "update")
       await update({ activeRole: role });
 
       // 3. Navigate to new dashboard
@@ -75,19 +74,19 @@ export function RoleSwitcher() {
         <Button
           variant="ghost"
           size="sm"
-          className="text-[#8b8b9a] hover:text-white hover:bg-[#1a1a25]"
+          className="text-neutral-400 hover:text-white hover:bg-white/5"
           disabled={switching}
         >
           <ArrowLeftRight className="w-4 h-4 mr-2" />
           {switching ? "Switching..." : "Switch Role"}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="bg-[#111118] border-[#1e1e2e]">
+      <DropdownMenuContent className="bg-neutral-900 border-white/10">
         {otherRoles.map(({ role, label, icon: Icon, href }) => (
           <DropdownMenuItem
             key={role}
             onClick={() => handleSwitch(role, href)}
-            className="text-[#8b8b9a] hover:text-white hover:bg-[#1a1a25] cursor-pointer"
+            className="text-neutral-400 hover:text-white hover:bg-white/5 cursor-pointer"
           >
             <Icon className="w-4 h-4 mr-2" />
             {label}

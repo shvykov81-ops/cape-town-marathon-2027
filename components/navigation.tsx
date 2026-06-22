@@ -4,14 +4,27 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import { Menu, X, User } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Menu, X, User, LayoutDashboard, LogOut } from "lucide-react";
 import { LocaleSwitcher } from "./locale-switcher";
+import { RoleSwitcher } from "@/components/auth/role-switcher";
 
 export function Navigation() {
     const [isOpen, setIsOpen] = useState(false);
     const pathname = usePathname();
     const locale = useLocale();
     const t = useTranslations("navigation");
+    const { data: session, status } = useSession();
+
+    const isAuthenticated = status === "authenticated";
+    const userRole = session?.user?.role;
+
+    // Dashboard link based on role
+    const dashboardHref = userRole === "admin" 
+        ? `/${locale}/admin` 
+        : userRole === "trainer" 
+            ? `/${locale}/trainer-dashboard` 
+            : `/${locale}/dashboard`;
 
     const navLinks = [
         { href: `/${locale}/about-race`, label: t("about") },
@@ -40,27 +53,52 @@ export function Navigation() {
                             <Link
                                 key={link.href}
                                 href={link.href}
-                                className={`text-sm font-medium transition-colors ${isActive(link.href)
+                                className={`text-sm font-medium transition-colors ${
+                                    isActive(link.href)
                                         ? "text-teal-400"
                                         : "text-neutral-400 hover:text-white"
-                                    }`}
+                                }`}
                             >
                                 {link.label}
                             </Link>
                         ))}
                         <LocaleSwitcher />
+
+                        {/* Role Switcher (only if authenticated and has multiple roles) */}
+                        {isAuthenticated && <RoleSwitcher />}
+
                         <Link
                             href={`/${locale}/booking`}
                             className="px-4 py-2 bg-teal-500 text-neutral-950 font-semibold text-sm rounded-full hover:bg-teal-400 transition-colors"
                         >
                             {t("booking")}
                         </Link>
-                        <Link
-                            href={`/${locale}/account`}
-                            className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
-                        >
-                            <User className="w-5 h-5 text-neutral-300" />
-                        </Link>
+
+                        {isAuthenticated ? (
+                            <div className="flex items-center gap-2">
+                                <Link
+                                    href={dashboardHref}
+                                    className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+                                    title="Dashboard"
+                                >
+                                    <LayoutDashboard className="w-5 h-5 text-teal-400" />
+                                </Link>
+                                <Link
+                                    href={`/${locale}/account`}
+                                    className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+                                    title="Account"
+                                >
+                                    <User className="w-5 h-5 text-neutral-300" />
+                                </Link>
+                            </div>
+                        ) : (
+                            <Link
+                                href={`/${locale}/account`}
+                                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-sm font-medium rounded-full transition-colors"
+                            >
+                                Sign In
+                            </Link>
+                        )}
                     </div>
 
                     {/* Mobile menu button */}
@@ -86,24 +124,47 @@ export function Navigation() {
                                 key={link.href}
                                 href={link.href}
                                 onClick={() => setIsOpen(false)}
-                                className={`block px-4 py-2 rounded-lg text-sm font-medium ${isActive(link.href)
-                                        ? "bg-teal-500/10 text-teal-400"
-                                        : "text-neutral-400 hover:text-white hover:bg-white/5"
-                                    }`}
+                                className={`block py-2 text-sm font-medium transition-colors ${
+                                    isActive(link.href)
+                                        ? "text-teal-400"
+                                        : "text-neutral-400 hover:text-white"
+                                }`}
                             >
                                 {link.label}
                             </Link>
                         ))}
-                        <div className="px-4 py-2">
-                            <LocaleSwitcher />
+                        <div className="pt-4 border-t border-white/5 space-y-2">
+                            {isAuthenticated && (
+                                <>
+                                    <Link
+                                        href={dashboardHref}
+                                        onClick={() => setIsOpen(false)}
+                                        className="flex items-center gap-2 py-2 text-sm text-teal-400"
+                                    >
+                                        <LayoutDashboard className="w-4 h-4" />
+                                        Dashboard
+                                    </Link>
+                                    {/* Mobile role switcher */}
+                                    <div className="py-2">
+                                        <RoleSwitcher />
+                                    </div>
+                                </>
+                            )}
+                            <Link
+                                href={`/${locale}/booking`}
+                                onClick={() => setIsOpen(false)}
+                                className="block py-2 text-sm font-semibold text-teal-400"
+                            >
+                                {t("booking")}
+                            </Link>
+                            <Link
+                                href={`/${locale}/account`}
+                                onClick={() => setIsOpen(false)}
+                                className="block py-2 text-sm text-neutral-400"
+                            >
+                                {isAuthenticated ? "Account" : "Sign In"}
+                            </Link>
                         </div>
-                        <Link
-                            href={`/${locale}/booking`}
-                            onClick={() => setIsOpen(false)}
-                            className="block px-4 py-2 bg-teal-500 text-neutral-950 font-semibold text-sm rounded-full text-center"
-                        >
-                            {t("booking")}
-                        </Link>
                     </div>
                 </div>
             )}
