@@ -29,23 +29,24 @@ async function getRoleFromToken(request: NextRequest): Promise<string | null> {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // PROTECTED ROUTES: check auth BEFORE next-intl (which returns 307 for these routes)
-  const isAdminRoute
-
-
-
-
-
-
-
-
-
-
-
-
- =
+  const isAdminRoute =
     pathname.startsWith("/admin") ||
-    pathname.startsWith("/en/admin") ||
+    pathname.startsW
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ith("/en/admin") ||
     pathname.startsWith("/ru/admin");
 
   const isTrainerRoute =
@@ -55,7 +56,7 @@ export async function middleware(request: NextRequest) {
 
   const isDashboardRoute =
     pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/en/dashboard") |
+    pathname.startsWith("/en
 
 
 
@@ -65,9 +66,7 @@ export async function middleware(request: NextRequest) {
 
 
 
-
-
-|
+/dashboard") ||
     pathname.startsWith("/ru/dashboard");
 
   if (isAdminRoute || isTrainerRoute || isDashboardRoute) {
@@ -76,75 +75,39 @@ export async function middleware(request: NextRequest) {
       request.cookies.has("authjs.session-token") ||
       request.cookies.has("next-auth.session-token");
 
- 
-
-
-
-
-
-
-
-
-   if (!hasSession) {
+    if (!hasSession) {
       return NextResponse.redirect(new URL("/account", request.url));
     }
 
     const role = await getRoleFromToken(request);
 
     if (isAdminRoute && role !== "admin") {
-      re
-
-
-
-
-
-
-turn NextResponse.redirect(new URL("/", request.url));
+      return NextResponse.redirect(new URL("/", request.url));
     }
 
     if (isTrainerRoute && role !== "trainer" && role !== "admin") {
       return NextResponse.redirect(new URL("/", request.url));
     }
 
-
-
-
-
-
-
-
-    // Authorized — pass through, skip next-intl for these routes
     return NextResponse.next();
   }
 
-  // PUBLIC ROUTES: use next-intl normally
- 
+  const intlResponse = intlMiddleware(
 
 
 
 
- const intlResponse = intlMiddleware(request);
+request);
 
   if (intlResponse.status === 307 || intlResponse.status === 308) {
     return intlResponse;
   }
-
-
-
-
-
 
   return intlResponse;
 }
 
 export const config = {
   matcher: [
- 
-
-
-
-
-
-   "/((?!api|_next|_vercel|videos|images|uploads|favicon.ico|robots.txt|sitemap.xml|manifest.json).*)",
+    "/((?!api|_next|_vercel|videos|images|uploads|favicon.ico|robots.txt|sitemap.xml|manifest.json).*),"
   ],
 };
