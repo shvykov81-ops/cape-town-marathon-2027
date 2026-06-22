@@ -30,20 +30,22 @@ async function getRoleFromToken(request: NextRequest): Promise<string | null> {
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname } = request.nextUrl
+
+
+
+
+
+
+
+
+
+
+
+
+
+;
 
   console.log("[DEBUG] pathname:", pathname);
 
@@ -55,21 +57,21 @@ export async function middleware(request: NextRequest) {
   }
 
   const hasSession =
-
-
-
-
-
-
-
-
-
-
-
-
-
     request.cookies.has("__Secure-authjs.session-token") ||
-    request.cookies.has("authjs.session-token") ||
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+   request.cookies.has("authjs.session-token") ||
     request.cookies.has("next-auth.session-token");
 
   console.log("[DEBUG] hasSession:", hasSession);
@@ -77,7 +79,7 @@ export async function middleware(request: NextRequest) {
   const isAdminRoute =
     pathname.startsWith("/admin") ||
     pathname.startsWith("/en/admin") ||
- 
+    pathname.startsWith("/ru/admin");
 
 
 
@@ -87,7 +89,6 @@ export async function middleware(request: NextRequest) {
 
 
 
-   pathname.startsWith("/ru/admin");
 
   console.log("[DEBUG] isAdminRoute:", isAdminRoute);
 
@@ -95,41 +96,41 @@ export async function middleware(request: NextRequest) {
     if (!hasSession) {
       console.log("[DEBUG] No session, redirect to /account");
       return NextResponse.redirect(new URL("/account", request.url));
-
-
-
-
-
-
-
-
     }
-    const role = await getRoleFromToken(request);
-    console.log("[DEBUG] Role from token:", role);
-    if (role !== "admin") {
-      console.log("[DEBUG] Role !== admin, redirect to /");
-      return NextResponse.redirect(new URL("/", request.url));
  
 
 
 
 
 
-   }
-  }
+
+
+   const role = await getRoleFromToken(request);
+    console.log("[DEBUG] Role from token:", role);
+    if (role !== "admin") {
+      console.log("[DEBUG] Role !== admin, redirect to /");
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+ 
+
+
+
+
+
+ }
 
   console.log("[DEBUG] Pass through");
   return intlResponse;
 }
 
-e
+export const config = {
 
 
 
 
 
 
-xport const config = {
+
   matcher: [
     "/((?!api|_next|_vercel|videos|images|uploads|favicon.ico|robots.txt|sitemap.xml|manifest.json).*)",
   ],
