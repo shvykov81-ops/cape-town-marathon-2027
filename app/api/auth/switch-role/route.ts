@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, unstable_update } from "@/auth";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 /**
  * POST /api/auth/switch-role
- * Switch active role during session (admin can switch to trainer and back).
- * Updates JWT token via unstable_update.
- * Requires valid session.
+ * Validate role switch permissions.
+ * Actual session update happens client-side via useSession().update()
+ * which triggers the JWT callback with trigger: "update".
  */
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -27,21 +27,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid role" }, { status: 400 });
   }
 
-  // Get user's actual role and trainer profile from DB
+  // Get user's actual role from DB
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    include: { trainerProfile: true },
+    select: { role: true },
   });
 
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  // Validate role switch permissions
+  // Validate permissions
   const canBeAdmin = user.role === "admin";
-  // Admin can ALWAYS be trainer (even without profile — can create later)
   const canBeTrainer = user.role === "trainer" || user.role === "admin";
-  const canBeUser = true; // Everyone can be user
+  const canBeUser = true;
 
   let allowed = false;
   if (role === "admin" && canBeAdmin) allowed = true;
@@ -50,24 +49,12 @@ export async function POST(request: NextRequest) {
 
   if (!allowed) {
     return NextResponse.json(
-      { error: `Cannot switch to role: ${role}. Insufficient permissions.` },
+      { error: `Cannot switch to role: ${role}` },
       { status: 403 }
     );
   }
 
-  // ─── CRITICAL FIX: Update JWT token ───
-  // unstable_update triggers the JWT callback with trigger: "update"
-  // This updates the role in the session token
-  try {
-    await unstable_update({ activeRole: role as "user" | "admin" | "trainer" });
-  } catch (error) {
-    console.error("Failed to update session:", error);
-    return NextResponse.json(
-      { error: "Failed to update session" },
-      { status: 500 }
-    );
-  }
-
+  // Return success — client will call useSession().update() to update JWT
   const redirectUrl =
     role === "admin" ? "/admin" :
     role === "trainer" ? "/trainer-dashboard" :

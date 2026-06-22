@@ -58,11 +58,17 @@ export function RoleSwitcher() {
         return;
       }
 
-      // 2. Update client session (triggers JWT callback with trigger: "update")
+      // 2. Update client session via NextAuth update()
+      // This triggers JWT callback with trigger: "update"
       await update({ activeRole: role });
 
-      // 3. Navigate to new dashboard
-      router.push(href);
+      // 3. Force refresh server components and middleware
+      router.refresh();
+
+      // 4. Small delay to let session propagate, then navigate
+      setTimeout(() => {
+        window.location.href = href;  // Full reload ensures middleware sees new role
+      }, 100);
     } finally {
       setSwitching(false);
     }
