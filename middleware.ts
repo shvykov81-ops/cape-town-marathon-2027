@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import createMiddleware from "next-intl/middleware";
@@ -31,22 +31,7 @@ export async function middleware(request: NextRequest) {
 
   const isAdminRoute =
     pathname.startsWith("/admin") ||
-    pathname.startsW
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-ith("/en/admin") ||
+    pathname.startsWith("/en/admin") ||
     pathname.startsWith("/ru/admin");
 
   const isTrainerRoute =
@@ -56,17 +41,7 @@ ith("/en/admin") ||
 
   const isDashboardRoute =
     pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/en
-
-
-
-
-
-
-
-
-
-/dashboard") ||
+    pathname.startsWith("/en/dashboard") ||
     pathname.startsWith("/ru/dashboard");
 
   if (isAdminRoute || isTrainerRoute || isDashboardRoute) {
@@ -92,12 +67,7 @@ ith("/en/admin") ||
     return NextResponse.next();
   }
 
-  const intlResponse = intlMiddleware(
-
-
-
-
-request);
+  const intlResponse = intlMiddleware(request);
 
   if (intlResponse.status === 307 || intlResponse.status === 308) {
     return intlResponse;
@@ -108,6 +78,6 @@ request);
 
 export const config = {
   matcher: [
-    "/((?!api|_next|_vercel|videos|images|uploads|favicon.ico|robots.txt|sitemap.xml|manifest.json).*),"
+    "/((?!api|_next|_vercel|videos|images|uploads|favicon.ico|robots.txt|sitemap.xml|manifest.json).*)",
   ],
 };
