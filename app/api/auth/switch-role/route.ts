@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { auth, unstable_update } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 /**
  * POST /api/auth/switch-role
  * Switch active role during session (admin can switch to trainer and back).
+ * Updates JWT token via unstable_update.
  * Requires valid session.
  */
 export async function POST(request: NextRequest) {
@@ -38,7 +39,8 @@ export async function POST(request: NextRequest) {
 
   // Validate role switch permissions
   const canBeAdmin = user.role === "admin";
-  const canBeTrainer = user.role === "trainer" || (user.role === "admin" && user.trainerProfile);
+  // Admin can ALWAYS be trainer (even without profile — can create later)
+  const canBeTrainer = user.role === "trainer" || user.role === "admin";
   const canBeUser = true; // Everyone can be user
 
   let allowed = false;
@@ -53,12 +55,28 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Update session via NextAuth update
-  // Note: This requires client-side session update
+  // ─── CRITICAL FIX: Update JWT token ───
+  // unstable_update triggers the JWT callback with trigger: "update"
+  // This updates the role in the session token
+  try {
+    await unstable_update({ activeRole: role });
+  } catch (error) {
+    console.error("Failed to update session:", error);
+    return NextResponse.json(
+      { error: "Failed to update session" },
+      { status: 500 }
+    );
+  }
+
+  const redirectUrl =
+    role === "admin" ? "/admin" :
+    role === "trainer" ? "/trainer-dashboard" :
+    "/dashboard";
+
   return NextResponse.json({
     success: true,
     role,
     message: `Switched to ${role} role`,
-    redirectUrl: role === "admin" ? "/admin" : role === "trainer" ? "/trainer-dashboard" : "/dashboard",
+    redirectUrl,
   });
 }

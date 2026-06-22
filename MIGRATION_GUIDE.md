@@ -1,146 +1,119 @@
-# MIGRATION GUIDE — Fix 404 After Role Selection Update
+# MIGRATION GUIDE — Role Switching Fix
 ## Cape Town Marathon 2027
 
-**Version:** 1.0.1-hotfix
+**Version:** 1.0.2
 **Date:** 2026-06-22
-**Status:** CRITICAL HOTFIX
+**Status:** CRITICAL FIX
 
 ---
 
 ## Problem
 
-After deploying the Role Selection & Access Control update, the site returns **404 on all pages**.
-
-### Root Cause
-
-The new `middleware.ts` replaced the next-intl middleware with role-based protection, but:
-1. **next-intl middleware was removed** — no `/` → `/en` redirect
-2. **Matcher was narrowed** to only protected routes — public pages bypassed middleware entirely
-3. **`localePrefix: "always"`** requires middleware to intercept ALL routes
-
-### What Broke
-
-| Route | Expected | Actual |
-|-------|----------|--------|
-| `/` | Redirect to `/en` | 404 |
-| `/en` | Homepage | 404 |
-| `/ru` | Homepage (RU) | 404 |
-| `/trainers` | Trainers listing | 404 |
+After implementing role selection, switching roles via "Switch Role" dropdown does NOT work:
+- JWT token retains old role after switch
+- Middleware redirects back to old dashboard
+- Admin cannot switch to Trainer without trainerProfile
 
 ---
 
-## Fix
+## Root Cause
 
-Replace `middleware.ts` with the fixed version that **combines next-intl + role protection**.
-
-### Key Changes
-
-```diff
-- import { NextResponse } from "next/server";
-- import type { NextRequest } from "next/server";
-- import { jwtVerify } from "jose";
-- import { routing } from "./i18n/routing";
-- 
-- export async function middleware(request: NextRequest) { ... }
-- 
-- export const config = {
--   matcher: ["/admin/:path*", "/trainer-dashboard/:path*", ...]
-- };
-
-+ import { NextResponse } from "next/server";
-+ import type { NextRequest } from "next/server";
-+ import { jwtVerify } from "jose";
-+ import createMiddleware from "next-intl/middleware";
-+ import { routing } from "./i18n/routing";
-+ 
-+ const intlMiddleware = createMiddleware(routing);
-+ 
-+ export async function middleware(request: NextRequest) {
-+   // 1. Handle i18n FIRST
-+   const intlResponse = intlMiddleware(request);
-+   if (intlResponse.status === 307 || intlResponse.status === 308) {
-+     return intlResponse;
-+   }
-+   // 2. Then role checks...
-+ }
-+ 
-+ export const config = {
-+   matcher: ["/((?!api|_next|...).*)"]  // Same as old working version
-+ };
-```
+1. `switch-role` API only returned JSON — never updated JWT token
+2. `RoleSwitcher` used `window.location.href` without session update
+3. Admin required `trainerProfile` to act as trainer
 
 ---
 
-## Deployment Steps
+## Changes
 
-### Step 1: Replace middleware.ts
+### 1. app/api/auth/switch-role/route.ts
+
+**Added:**
+- Import `unstable_update` from `@/auth`
+- Call `await unstable_update({ activeRole: role })` after validation
+- This triggers JWT callback with `trigger: "update"` + `session.activeRole`
+
+**Changed:**
+- Admin can switch to trainer WITHOUT trainerProfile
+
+### 2. components/auth/role-switcher.tsx
+
+**Changed:**
+- Use `useSession().update()` instead of `window.location.href`
+- Call `update({ activeRole: role })` after server validation
+- Use `router.push(href)` for navigation (SPA, no full reload)
+
+### 3. auth.ts
+
+**Added:**
+- Export `unstable_update` from NextAuth
+- Admin can ALWAYS be trainer (removed trainerProfile check)
+
+### 4. app/api/auth/check-roles/route.ts
+
+**Changed:**
+- Admin always sees "trainer" option (regardless of trainerProfile)
+
+---
+
+## Deployment
 
 ```bash
-# Copy the fixed middleware.ts to project root
-cp middleware.ts /path/to/project/middleware.ts
-```
+# 1. Copy files
+cp auth.ts /path/to/project/auth.ts
+cp app/api/auth/switch-role/route.ts /path/to/project/app/api/auth/switch-role/route.ts
+cp app/api/auth/check-roles/route.ts /path/to/project/app/api/auth/check-roles/route.ts
+cp components/auth/role-switcher.tsx /path/to/project/components/auth/role-switcher.tsx
 
-### Step 2: Verify i18n/routing.ts exists
-
-```typescript
-// i18n/routing.ts
-import { defineRouting } from "next-intl/routing";
-import { createNavigation } from "next-intl/navigation";
-
-export const routing = defineRouting({
-  locales: ["en", "ru"],
-  defaultLocale: "en",
-  localePrefix: "always",
-});
-
-export const { Link, redirect, usePathname, useRouter } = createNavigation(routing);
-```
-
-### Step 3: Build
-
-```bash
+# 2. Build
 npm run build
-```
 
-### Step 4: Test locally
-
-```bash
-npm run dev
-# Visit http://localhost:3000/ → should redirect to /en
-# Visit http://localhost:3000/en → should show homepage
-# Visit http://localhost:3000/ru → should show homepage (RU)
-```
-
-### Step 5: Deploy
-
-```bash
-git add middleware.ts
-git commit -m "hotfix: restore next-intl middleware with role protection"
+# 3. Commit
+git add auth.ts app/api/auth/switch-role/route.ts app/api/auth/check-roles/route.ts components/auth/role-switcher.tsx
+git commit -m "fix: role switching with JWT update"
 git push
 ```
 
 ---
 
-## Testing Checklist
+## Testing
 
-- [ ] `/` redirects to `/en`
-- [ ] `/en` shows homepage
-- [ ] `/ru` shows homepage (RU)
-- [ ] `/trainers` shows trainers listing
-- [ ] `/admin` redirects to `/account` (not logged in)
-- [ ] `/trainer-dashboard` redirects to `/account` (not logged in)
-- [ ] Logged-in admin can access `/admin`
-- [ ] Logged-in trainer can access `/trainer-dashboard`
-- [ ] Role switching still works
+### Test 1: Admin with trainerProfile switches to Trainer
+```
+1. Login as admin with trainerProfile
+2. See "Switch Role" dropdown
+3. Click "Trainer Dashboard"
+4. Should navigate to /trainer-dashboard
+5. Middleware should allow access (new role in JWT)
+```
+
+### Test 2: Admin WITHOUT trainerProfile switches to Trainer
+```
+1. Login as admin without trainerProfile
+2. See "Switch Role" dropdown with Trainer option
+3. Click "Trainer Dashboard"
+4. Should navigate to /trainer-dashboard
+5. Can create trainer profile from there
+```
+
+### Test 3: Trainer switches to User
+```
+1. Login as trainer
+2. Click "Switch Role" → "User Dashboard"
+3. Should navigate to /dashboard
+```
+
+### Test 4: Single-role user
+```
+1. Login as regular user
+2. No "Switch Role" button shown
+3. Direct redirect to /dashboard
+```
 
 ---
 
 ## Notes
 
-- **next-intl middleware MUST run first** — it handles locale detection and redirects
-- **Role checks run AFTER** — on the already-localized path (`/en/admin`, `/ru/admin`)
-- **Matcher must include ALL routes** — next-intl needs to intercept `/` for redirect
-
----
-
-*Hotfix for Role Selection v1.0.0. Original feature remains intact; only middleware execution order fixed.*
+- `unstable_update` is NextAuth v5 beta API — may change in stable release
+- JWT update is synchronous — middleware sees new role immediately
+- `originalRole` in session prevents privilege escalation (cannot become admin if not one)

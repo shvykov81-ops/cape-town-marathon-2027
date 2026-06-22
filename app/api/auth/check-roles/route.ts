@@ -42,11 +42,9 @@ export async function POST(request: NextRequest) {
   // Everyone can be user
   roles.push({ role: "user", hasTrainerProfile: !!user.trainerProfile });
 
-  // Trainer role
+  // Trainer role: available for trainers AND admins (admin can always be trainer)
   if (user.role === "trainer" || user.role === "admin") {
-    if (user.trainerProfile) {
-      roles.push({ role: "trainer", hasTrainerProfile: true });
-    }
+    roles.push({ role: "trainer", hasTrainerProfile: !!user.trainerProfile });
   }
 
   // Admin role

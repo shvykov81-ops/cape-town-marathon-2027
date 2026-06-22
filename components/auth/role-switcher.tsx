@@ -13,7 +13,7 @@ import {
 import { User, Shield, Dumbbell, ArrowLeftRight } from "lucide-react";
 
 export function RoleSwitcher() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const router = useRouter();
   const [switching, setSwitching] = useState(false);
 
@@ -45,16 +45,25 @@ export function RoleSwitcher() {
   async function handleSwitch(role: string, href: string) {
     setSwitching(true);
     try {
+      // 1. Validate role switch on server
       const res = await fetch("/api/auth/switch-role", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role }),
       });
 
-      if (res.ok) {
-        // Force session refresh and redirect
-        window.location.href = href;
+      if (!res.ok) {
+        const data = await res.json();
+        console.error("Role switch failed:", data.error);
+        return;
       }
+
+      // 2. Update client session (triggers JWT callback)
+      // This ensures middleware sees the new role immediately
+      await update({ activeRole: role });
+
+      // 3. Navigate to new dashboard
+      router.push(href);
     } finally {
       setSwitching(false);
     }
@@ -63,10 +72,10 @@ export function RoleSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="ghost"
           size="sm"
-          className="border-[#1e1e2e] bg-[#111118] text-[#8b8b9a] hover:text-white hover:bg-[#1a1a25]"
+          className="text-[#8b8b9a] hover:text-white hover:bg-[#1a1a25]"
           disabled={switching}
         >
           <ArrowLeftRight className="w-4 h-4 mr-2" />

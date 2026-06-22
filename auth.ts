@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
   trustHost: true,
   secret: process.env.AUTH_SECRET,
   adapter: PrismaAdapter(prisma),
@@ -18,14 +18,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
-        activeRole: { label: "Active Role", type: "text" }, // NEW: role selection
+        activeRole: { label: "Active Role", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
         const email = (credentials.email as string).toLowerCase().trim();
         const password = credentials.password as string;
-        const requestedRole = (credentials.activeRole as string) || null; // NEW
+        const requestedRole = (credentials.activeRole as string) || null;
 
         const user = await prisma.user.findUnique({
           where: { email },
@@ -38,21 +38,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!isValid) return null;
 
         // Determine effective role
-        // If user requested a specific role, validate they have it
         let effectiveRole = user.role;
 
         if (requestedRole) {
-          // Check if user can assume this role
           if (requestedRole === "admin" && user.role === "admin") {
             effectiveRole = "admin";
           } else if (requestedRole === "trainer" && (user.role === "trainer" || user.role === "admin")) {
-            // Admin can also act as trainer if they have a trainer profile
-            if (user.role === "admin" && !user.trainerProfile) {
-              // Admin without trainer profile cannot be trainer
-              effectiveRole = "admin";
-            } else {
-              effectiveRole = "trainer";
-            }
+            // Admin can ALWAYS be trainer (even without profile)
+            effectiveRole = "trainer";
           } else if (requestedRole === "user") {
             effectiveRole = "user";
           }
@@ -63,7 +56,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: user.email,
           name: user.name,
           role: effectiveRole as "user" | "admin" | "trainer",
-          originalRole: user.role as "user" | "admin" | "trainer", // Store original role
+          originalRole: user.role as "user" | "admin" | "trainer",
         };
       },
     }),
