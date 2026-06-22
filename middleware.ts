@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
-import createMiddleware from "next-intl/middleware";
-import { routing } from "./i18n/routing";
 
 const SECRET = new TextEncoder().encode(
   process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || ""
 );
-
-const intlMiddleware = createMiddleware(routing);
 
 async function getRoleFromToken(request: NextRequest): Promise<string | null> {
   const tokenCookie =
@@ -67,13 +63,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const intlResponse = intlMiddleware(request);
-
-  if (intlResponse.status === 307 || intlResponse.status === 308) {
-    return intlResponse;
-  }
-
-  return intlResponse;
+  return NextResponse.next();
 }
 
 export const config = {
