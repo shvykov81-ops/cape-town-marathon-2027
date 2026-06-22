@@ -27,7 +27,7 @@ export function RoleSelector({ availableRoles, onSelectRole, isLoading }: RoleSe
 
   return (
     <div className="space-y-4">
-      <p className="text-[#8b8b9a] text-sm text-center">
+      <p className="text-neutral-400 text-sm text-center">
         Your account has multiple roles. Select how you want to continue:
       </p>
 
@@ -44,7 +44,7 @@ export function RoleSelector({ availableRoles, onSelectRole, isLoading }: RoleSe
               className={`relative p-4 rounded-xl border-2 transition-all text-left ${
                 isSelected 
                   ? `${config.color} border-current` 
-                  : "bg-[#111118] border-[#1e1e2e] hover:border-[#2e2e3e]"
+                  : "bg-white/5 border-white/10 hover:border-white/20"
               }`}
             >
               <div className="flex items-center gap-4">
@@ -58,7 +58,7 @@ export function RoleSelector({ availableRoles, onSelectRole, isLoading }: RoleSe
                       {role}
                     </Badge>
                   </div>
-                  <p className="text-[#5a5a6a] text-sm mt-1">{description}</p>
+                  <p className="text-neutral-500 text-sm mt-1">{description}</p>
                 </div>
                 {isSelected && (
                   <div className="w-5 h-5 rounded-full bg-current flex items-center justify-center">
@@ -72,7 +72,7 @@ export function RoleSelector({ availableRoles, onSelectRole, isLoading }: RoleSe
       </div>
 
       <Button
-        className="w-full bg-gradient-to-r from-[#ff6b35] to-[#ff8c5a] hover:opacity-90 text-white font-semibold py-6"
+        className="w-full bg-gradient-to-r from-teal-600 to-teal-500 hover:opacity-90 text-white font-semibold py-6"
         onClick={() => selectedRole && onSelectRole(selectedRole)}
         disabled={!selectedRole || isLoading}
       >
