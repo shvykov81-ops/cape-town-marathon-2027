@@ -1,7 +1,5 @@
-const withNextIntl = require("next-intl/plugin")("./i18n/request.ts");
-
 /** @type {import('next').NextConfig} */
-const nextConfig = withNextIntl({
+const nextConfig = {
   images: {
     unoptimized: true,
     domains: [
@@ -51,6 +49,6 @@ const nextConfig = withNextIntl({
       },
     ];
   },
-});
+};
 
 module.exports = nextConfig;
