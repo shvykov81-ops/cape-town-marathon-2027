@@ -1,185 +1,272 @@
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const ADMIN_GROUP_ID = process.env.TELEGRAM_ADMIN_GROUP_ID;
+import { TrainerProfileStatus } from "@prisma/client";
 
-if (!BOT_TOKEN && process.env.NODE_ENV === "production") {
-  console.warn("TELEGRAM_BOT_TOKEN not set — Telegram notifications disabled");
-}
+/**
+ * Send notification to admin Telegram group about trainer status change.
+ */
+export async function sendTrainerStatusChangeNotification(
+  trainer: {
+    displayName: string | null;
+    firstName: string;
+    lastName: string;
+    slug: string;
+    status: TrainerProfileStatus;
+  },
+  oldStatus: string,
+  adminName: string | null
+): Promise<void> {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_ADMIN_GROUP_ID;
 
-export async function sendTelegramMessage(chatId: string, text: string): Promise<boolean> {
-  if (!BOT_TOKEN) return false;
-
-  try {
-    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text,
-        parse_mode: "HTML",
-        disable_web_page_preview: true
-      })
-    });
-
-    const data = await response.json();
-    return data.ok === true;
-  } catch (error) {
-    console.error("Telegram send failed:", error);
-    return false;
+  if (!botToken || !chatId) {
+    console.log("[TELEGRAM MOCK] Trainer status change:", trainer.displayName, oldStatus, "→", trainer.status);
+    return;
   }
+
+  const statusEmoji: Record<string, string> = {
+    DRAFT: "📝",
+    PENDING: "⏳",
+    PUBLISHED: "✅",
+    REJECTED: "❌",
+    SUSPENDED: "🚫",
+    APPLICATION_APPROVED: "🎉",
+  };
+
+  const message = `
+<b>${statusEmoji[trainer.status] || "📋"} Trainer Status Update</b>
+
+<b>Name:</b> ${trainer.displayName || `${trainer.firstName} ${trainer.lastName}`}
+<b>Slug:</b> ${trainer.slug}
+<b>Status:</b> ${oldStatus} → <b>${trainer.status}</b>
+<b>By:</b> ${adminName || "System"}
+
+<a href="${process.env.NEXTAUTH_URL}/trainers/${trainer.slug}">View Profile</a>
+  `.trim();
+
+  await sendTelegramMessage(botToken, chatId, message);
 }
 
+/**
+ * T-5: Admin notification when trainer submits profile for review
+ */
+export async function sendTrainerSubmissionNotification({
+  trainerName,
+  trainerSlug,
+  submittedAt,
+}: {
+  trainerName: string;
+  trainerSlug: string;
+  submittedAt: Date;
+}): Promise<void> {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_ADMIN_GROUP_ID;
+
+  if (!botToken || !chatId) {
+    console.log("[TELEGRAM MOCK] Trainer submitted:", trainerName, submittedAt);
+    return;
+  }
+
+  const message = `
+<b>⏳ New Trainer Submission</b>
+
+<b>Trainer:</b> ${trainerName}
+<b>Submitted:</b> ${submittedAt.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
+
+<a href="${process.env.NEXTAUTH_URL}/admin/trainers">Review in Admin Panel</a>
+  `.trim();
+
+  await sendTelegramMessage(botToken, chatId, message);
+}
+
+/**
+ * T-2: Admin notification when trainer submits a revision
+ */
+export async function sendTrainerRevisionSubmittedNotification({
+  trainerName,
+  trainerSlug,
+  revisionId,
+  submittedAt,
+}: {
+  trainerName: string;
+  trainerSlug: string;
+  revisionId: string;
+  submittedAt: Date;
+}): Promise<void> {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_ADMIN_GROUP_ID;
+
+  if (!botToken || !chatId) {
+    console.log("[TELEGRAM MOCK] Revision submitted:", trainerName, revisionId);
+    return;
+  }
+
+  const message = `
+<b>📝 New Revision Submitted</b>
+
+<b>Trainer:</b> ${trainerName}
+<b>Revision ID:</b> <code>${revisionId}</code>
+<b>Submitted:</b> ${submittedAt.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
+
+<a href="${process.env.NEXTAUTH_URL}/admin/revisions">Review Revisions</a>
+  `.trim();
+
+  await sendTelegramMessage(botToken, chatId, message);
+}
+
+// ─── BACKWARD COMPATIBILITY EXPORTS ─────────────────────
+// These functions existed in the original telegram.ts
+// and are imported by other API routes
+
+/**
+ * Send booking notification to admin group.
+ * Used by: app/api/booking/route.ts
+ * Signature: sendBookingNotification(booking, { name, email, phone })
+ */
+export async function sendBookingNotification(
+  booking: any,
+  userInfo: { name: string | null; email: string; phone: string | null }
+): Promise<void> {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_ADMIN_GROUP_ID;
+
+  if (!botToken || !chatId) {
+    console.log("[TELEGRAM MOCK] Booking:", userInfo.name, booking.package?.name || "package");
+    return;
+  }
+
+  const message = `
+<b>🎉 New Booking</b>
+
+<b>User:</b> ${userInfo.name || "Unknown"}
+<b>Email:</b> ${userInfo.email}
+<b>Phone:</b> ${userInfo.phone || "Not provided"}
+<b>Package:</b> ${booking.package?.name || "Unknown"}
+<b>Total:</b> $${booking.totalPrice}
+<b>Check-in:</b> ${new Date(booking.checkInDate).toLocaleDateString("en-US")}
+  `.trim();
+
+  await sendTelegramMessage(botToken, chatId, message);
+}
+
+/**
+ * Send contact form notification to admin group.
+ * Used by: app/api/contact/route.ts
+ * Signature: sendContactNotification({ name, email, phone, subject, message, createdAt })
+ */
 export async function sendContactNotification(contact: {
   name: string;
   email: string;
   phone?: string | null;
   subject: string;
   message: string;
-  createdAt: Date;
-}): Promise<boolean> {
-  if (!ADMIN_GROUP_ID) return false;
+  createdAt?: Date;
+}): Promise<void> {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_ADMIN_GROUP_ID;
 
-  const subjectLabels: Record<string, string> = {
-    GENERAL: "General Inquiry",
-    PREP_CAMP: "Prep Camp Booking",
-    TRAINER: "Trainer Inquiry",
-    PARTNERSHIP: "Partnership",
-    MEDIA: "Media Request"
-  };
+  if (!botToken || !chatId) {
+    console.log("[TELEGRAM MOCK] Contact:", contact.name, contact.subject);
+    return;
+  }
 
-  const text = `📬 <b>New Contact Form Submission</b>
+  const message = `
+<b>📨 New Contact Message</b>
 
-👤 <b>Name:</b> ${escapeHtml(contact.name)}
-📧 <b>Email:</b> ${escapeHtml(contact.email)}
-📱 <b>Phone:</b> ${contact.phone ? escapeHtml(contact.phone) : "Not provided"}
-📋 <b>Subject:</b> ${subjectLabels[contact.subject] || contact.subject}
+<b>From:</b> ${contact.name}
+<b>Email:</b> ${contact.email}
+<b>Phone:</b> ${contact.phone || "Not provided"}
+<b>Subject:</b> ${contact.subject}
+<b>Message:</b> ${contact.message.slice(0, 500)}${contact.message.length > 500 ? "..." : ""}
+  `.trim();
 
-📝 <b>Message:</b>
-${escapeHtml(contact.message)}
-
-⏰ <b>Received:</b> ${contact.createdAt.toISOString()}
-🔗 <b>Reply:</b> Reply to this thread or email ${escapeHtml(contact.email)}`;
-
-  return sendTelegramMessage(ADMIN_GROUP_ID, text);
-}
-
-export async function sendBookingNotification(booking: {
-  id: string;
-  status: string;
-  checkInDate: Date;
-  checkOutDate: Date;
-  guestsCount: number;
-  totalPrice: number | Decimal;
-  trainer?: { firstName: string; lastName: string } | null;
-  package?: { name: string };
-}, user: {
-  name?: string | null;
-  email: string;
-  phone?: string | null;
-}): Promise<boolean> {
-  if (!ADMIN_GROUP_ID) return false;
-
-  const trainerName = booking.trainer
-    ? `${booking.trainer.firstName} ${booking.trainer.lastName}`
-    : "Not selected";
-
-  const packageName = booking.package?.name || "Unknown package";
-  const userName = user.name || user.email;
-
-  const text = `🏃‍♂️ <b>New Booking!</b>
-
-👤 <b>User:</b> ${escapeHtml(userName)}
-📧 <b>Email:</b> ${escapeHtml(user.email)}
-📱 <b>Phone:</b> ${user.phone ? escapeHtml(user.phone) : "Not provided"}
-
-📦 <b>Package:</b> ${escapeHtml(packageName)}
-👨‍🏫 <b>Trainer:</b> ${escapeHtml(trainerName)}
-📅 <b>Dates:</b> ${formatDate(booking.checkInDate)} — ${formatDate(booking.checkOutDate)}
-👥 <b>Guests:</b> ${booking.guestsCount}
-💰 <b>Total:</b> $${booking.totalPrice}
-⏳ <b>Status:</b> ${booking.status}
-
-🔗 <b>Booking ID:</b> <code>${booking.id}</code>
-
-📝 <b>Action:</b> Review in admin panel`;
-
-  return sendTelegramMessage(ADMIN_GROUP_ID, text);
+  await sendTelegramMessage(botToken, chatId, message);
 }
 
 /**
- * NEW: Notify admin when a trainer application is submitted
+ * Send trainer application notification to admin group.
+ * Used by: app/api/trainers/apply/route.ts
+ * Signature: sendTrainerApplicationNotification({ name, email, applicationId, createdAt })
  */
 export async function sendTrainerApplicationNotification(application: {
   name: string;
   email: string;
-  applicationId: string;
-  createdAt: Date;
-}): Promise<boolean> {
-  if (!ADMIN_GROUP_ID) return false;
+  applicationId?: string;
+  createdAt?: Date;
+  experience?: string;
+}): Promise<void> {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_ADMIN_GROUP_ID;
 
-  const text = `🎓 <b>New Trainer Application!</b>
+  if (!botToken || !chatId) {
+    console.log("[TELEGRAM MOCK] Trainer application:", application.name);
+    return;
+  }
 
-👤 <b>Name:</b> ${escapeHtml(application.name)}
-📧 <b>Email:</b> ${escapeHtml(application.email)}
+  const message = `
+<b>👤 New Trainer Application</b>
 
-🔗 <b>Application ID:</b> <code>${application.applicationId}</code>
-⏰ <b>Submitted:</b> ${formatDate(application.createdAt)}
+<b>Name:</b> ${application.name}
+<b>Email:</b> ${application.email}
+<b>Experience:</b> ${application.experience || "Not provided"}
+${application.applicationId ? `<b>Application ID:</b> ${application.applicationId}` : ""}
 
-📝 <b>Action:</b> Review in admin panel → /admin/trainers`;
+<a href="${process.env.NEXTAUTH_URL}/admin/trainer-applications">Review Applications</a>
+  `.trim();
 
-  return sendTelegramMessage(ADMIN_GROUP_ID, text);
+  await sendTelegramMessage(botToken, chatId, message);
 }
 
 /**
- * NEW: Notify admin when trainer status changes
+ * Low-level Telegram API helper.
+ * Used by: app/api/telegram/webhook/route.ts
+ * Signature: sendTelegramMessage(chatId, text) — botToken from env
+ *           sendTelegramMessage(botToken, chatId, text) — explicit
  */
-export async function sendTrainerStatusChangeNotification(trainer: {
-  displayName?: string | null;
-  firstName: string;
-  lastName: string;
-  slug: string;
-  status: string;
-}, oldStatus: string, adminName: string): Promise<boolean> {
-  if (!ADMIN_GROUP_ID) return false;
+export async function sendTelegramMessage(
+  arg1: string,
+  arg2: string,
+  arg3?: string
+): Promise<void> {
+  let botToken: string;
+  let chatId: string;
+  let text: string;
 
-  const displayName = trainer.displayName || `${trainer.firstName} ${trainer.lastName}`;
+  if (arg3 !== undefined) {
+    // 3-arg form: sendTelegramMessage(botToken, chatId, text)
+    botToken = arg1;
+    chatId = arg2;
+    text = arg3;
+  } else {
+    // 2-arg form: sendTelegramMessage(chatId, text) — botToken from env
+    botToken = process.env.TELEGRAM_BOT_TOKEN || "";
+    chatId = arg1;
+    text = arg2;
+  }
 
-  const statusEmojis: Record<string, string> = {
-    PUBLISHED: "✅",
-    REJECTED: "❌",
-    SUSPENDED: "🚫",
-    PENDING: "⏳",
-    DRAFT: "📝",
-  };
+  if (!botToken || !chatId) {
+    console.log("[TELEGRAM MOCK] Message to", chatId, ":", text.slice(0, 50));
+    return;
+  }
 
-  const text = `${statusEmojis[trainer.status] || "🔔"} <b>Trainer Status Changed</b>
+  try {
+    const response = await fetch(
+      `https://api.telegram.org/bot${botToken}/sendMessage`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text,
+          parse_mode: "HTML",
+          disable_web_page_preview: true,
+        }),
+      }
+    );
 
-👤 <b>Trainer:</b> ${escapeHtml(displayName)}
-🔗 <b>Profile:</b> /trainers/${trainer.slug}
-
-📊 <b>Old Status:</b> ${oldStatus}
-📊 <b>New Status:</b> ${trainer.status}
-
-👨‍💼 <b>Changed by:</b> ${escapeHtml(adminName)}
-
-📝 <b>Action:</b> Review in admin panel`;
-
-  return sendTelegramMessage(ADMIN_GROUP_ID, text);
+    if (!response.ok) {
+      const error = await response.text();
+      console.error("Telegram API error:", error);
+    }
+  } catch (error) {
+    console.error("Failed to send Telegram message:", error);
+  }
 }
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-ZA", {
-    day: "numeric",
-    month: "short",
-    year: "numeric"
-  });
-}
-
-type Decimal = { toString(): string };

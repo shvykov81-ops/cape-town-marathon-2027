@@ -318,6 +318,8 @@ model Trainer {
   packages            PackageTrainer[]
   changeHistory       TrainerProfileChange[]
   availability        TrainerAvailability[]
+  revisions           TrainerRevision[]      // ← T-2: revision workflow
+  applications        TrainerApplication[] // ← T-1: link approved applications
 }
 
 // ============================================
@@ -335,6 +337,25 @@ model TrainerProfileChange {
   createdAt   DateTime                 @default(now())
 
   @@index([trainerId, createdAt])
+}
+
+// ============================================
+// NEW: TrainerRevision (T-2 — Revision Workflow)
+// ============================================
+model TrainerRevision {
+  id             String         @id @default(cuid())
+  trainerId      String
+  trainer        Trainer        @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  data           Json           // snapshot of proposed changes
+  status         RevisionStatus @default(DRAFT)
+  createdAt      DateTime       @default(now())
+  reviewedAt     DateTime?
+  reviewedBy     String?        // admin userId
+  moderationNote String?        @db.Text
+
+  @@index([trainerId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 // ============================================
@@ -424,14 +445,23 @@ enum TrainerApplicationStatus {
   REJECTED
 }
 
+enum RevisionStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model TrainerApplication {
   id        String   @id @default(cuid())
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id])
   status    TrainerApplicationStatus @default(PENDING)
   note      String?  @db.Text
-  trainerId String?  // ← ДОБАВИТЬ ЭТУ СТРОКУ
+  trainerId String?  // ← LINK TO CREATED TRAINER PROFILE (T-1)
+  trainer   Trainer? @relation(fields: [trainerId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
 
+  @@index([trainerId])
+}

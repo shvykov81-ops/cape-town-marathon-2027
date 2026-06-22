@@ -4,11 +4,15 @@ import { requireAdmin } from "@/lib/auth/trainer-guard";
 import { moderationActionSchema } from "@/lib/validations/trainer";
 import { TrainerProfileStatus } from "@prisma/client";
 import { sendTrainerStatusChangeNotification } from "@/lib/telegram";
+import { sendTrainerModerationEmail } from "@/lib/email";
+import { revalidateTag } from "next/cache";
 
 /**
  * PATCH /api/admin/trainers/[id]/moderate
  * Approve, Reject, or Suspend a trainer profile.
  * Admin only.
+ * 
+ * T-3: Added email notification to trainer + in-app notification
  */
 export async function PATCH(
   request: NextRequest,
@@ -36,9 +40,9 @@ export async function PATCH(
 
   const { action, reason } = parsed.data;
 
-  const trainer = await prisma.trainer.findUnique({ 
+  const trainer = await prisma.trainer.findUnique({
     where: { id },
-    include: { user: { select: { name: true, email: true } } }
+    include: { user: { select: { id: true, name: true, email: true } } }
   });
   if (!trainer) {
     return NextResponse.json({ error: "Trainer not found" }, { status: 404 });
@@ -98,6 +102,38 @@ export async function PATCH(
     });
   }
 
+  // ─── T-3: Notify trainer via email ─────────────────
+  if (trainer.user?.email) {
+    sendTrainerModerationEmail({
+      to: trainer.user.email,
+      trainerName: trainer.displayName || trainer.firstName,
+      oldStatus,
+      newStatus,
+      reason: reason || undefined,
+      actionUrl: `${process.env.NEXTAUTH_URL}/trainer-dashboard`,
+    }).catch(console.error);
+  }
+
+  // ─── T-3: In-app notification for trainer ─────────────
+  if (trainer.userId) {
+    await prisma.notification.create({
+      data: {
+        userId: trainer.userId,
+        type: "TRAINER_STATUS_CHANGE",
+        channel: "in_app",
+        status: "sent",
+        payload: JSON.stringify({
+          trainerId: trainer.id,
+          oldStatus,
+          newStatus,
+          reason,
+          message: `Your trainer profile status changed from ${oldStatus} to ${newStatus}.`,
+        }),
+        sentAt: new Date(),
+      },
+    });
+  }
+
   // Notify admin group via Telegram (non-blocking)
   const admin = await prisma.user.findUnique({
     where: { id: adminId },
@@ -117,6 +153,9 @@ export async function PATCH(
       admin.name || admin.email
     ).catch(console.error);
   }
+
+  // Invalidate cache
+  revalidateTag("trainers");
 
   return NextResponse.json({
     success: true,

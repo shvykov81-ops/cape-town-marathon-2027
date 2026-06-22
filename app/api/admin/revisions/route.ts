@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/trainer-guard";
-import { TrainerApplicationStatus } from "@prisma/client";
+import { RevisionStatus } from "@prisma/client";
 import { z } from "zod";
 
 const querySchema = z.object({
-  status: z.nativeEnum(TrainerApplicationStatus).optional(),
+  status: z.nativeEnum(RevisionStatus).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   search: z.string().max(100).optional(),
 });
 
 /**
- * GET /api/admin/trainer-applications
- * List all trainer applications with optional status filter.
+ * GET /api/admin/revisions
+ * List all trainer revisions with optional status filter.
  * Admin only.
  */
 export async function GET(request: NextRequest) {
@@ -41,32 +41,43 @@ export async function GET(request: NextRequest) {
   const where: Record<string, unknown> = {};
   if (status) where.status = status;
   if (search) {
-    where.OR = [
-      { user: { name: { contains: search, mode: "insensitive" } } },
-      { user: { email: { contains: search, mode: "insensitive" } } },
-    ];
+    where.trainer = {
+      OR: [
+        { displayName: { contains: search, mode: "insensitive" } },
+        { firstName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } },
+      ],
+    };
   }
 
-  const [applications, total] = await Promise.all([
-    prisma.trainerApplication.findMany({
+  const [revisions, total] = await Promise.all([
+    prisma.trainerRevision.findMany({
       where,
       skip,
       take: limit,
       orderBy: { createdAt: "desc" },
       include: {
-        user: {
-          select: { id: true, name: true, email: true, image: true },
-        },
         trainer: {
-          select: { id: true, slug: true, status: true },
+          select: {
+            id: true,
+            slug: true,
+            displayName: true,
+            firstName: true,
+            lastName: true,
+            photoUrl: true,
+            status: true,
+            user: {
+              select: { email: true },
+            },
+          },
         },
       },
     }),
-    prisma.trainerApplication.count({ where }),
+    prisma.trainerRevision.count({ where }),
   ]);
 
-  // Count by status for filters
-  const statusCounts = await prisma.trainerApplication.groupBy({
+  // Count by status
+  const statusCounts = await prisma.trainerRevision.groupBy({
     by: ["status"],
     _count: { status: true },
   });
@@ -77,7 +88,7 @@ export async function GET(request: NextRequest) {
   }, {} as Record<string, number>);
 
   return NextResponse.json({
-    applications,
+    revisions,
     counts,
     pagination: {
       page,
