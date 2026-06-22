@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
   // unstable_update triggers the JWT callback with trigger: "update"
   // This updates the role in the session token
   try {
-    await unstable_update({ activeRole: role });
+    await unstable_update({ activeRole: role as "user" | "admin" | "trainer" });
   } catch (error) {
     console.error("Failed to update session:", error);
     return NextResponse.json(
