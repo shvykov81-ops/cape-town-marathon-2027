@@ -1,198 +1,146 @@
-# MIGRATION GUIDE — Role Selection & Access Control
+# MIGRATION GUIDE — Fix 404 After Role Selection Update
 ## Cape Town Marathon 2027
 
-**Version:** 1.0.0
+**Version:** 1.0.1-hotfix
 **Date:** 2026-06-22
+**Status:** CRITICAL HOTFIX
 
 ---
 
-## Overview
+## Problem
 
-This update adds:
-1. **Role selection at login** — users with multiple roles choose which one to use
-2. **Middleware role protection** — `/admin/*` requires admin, `/trainer-dashboard/*` requires trainer
-3. **Role switching** — admin can switch between admin/trainer/user without re-login
-4. **Pre-login role check** — API endpoint to discover available roles before JWT issued
+After deploying the Role Selection & Access Control update, the site returns **404 on all pages**.
 
----
+### Root Cause
 
-## Files Changed
+The new `middleware.ts` replaced the next-intl middleware with role-based protection, but:
+1. **next-intl middleware was removed** — no `/` → `/en` redirect
+2. **Matcher was narrowed** to only protected routes — public pages bypassed middleware entirely
+3. **`localePrefix: "always"`** requires middleware to intercept ALL routes
 
-### New Files
-- `components/auth/role-selector.tsx` — UI for role selection
-- `components/auth/role-switcher.tsx` — Navbar dropdown to switch roles
-- `app/api/auth/check-roles/route.ts` — Pre-login role discovery
-- `app/api/auth/switch-role/route.ts` — Role switching during session
+### What Broke
 
-### Modified Files
-- `middleware.ts` — Added role-based route protection
-- `auth.ts` — Added `activeRole` support in credentials
-- `app/account/page.tsx` — Added role selection flow
+| Route | Expected | Actual |
+|-------|----------|--------|
+| `/` | Redirect to `/en` | 404 |
+| `/en` | Homepage | 404 |
+| `/ru` | Homepage (RU) | 404 |
+| `/trainers` | Trainers listing | 404 |
 
 ---
 
-## Installation
+## Fix
 
-### Step 1: Install dependency
+Replace `middleware.ts` with the fixed version that **combines next-intl + role protection**.
 
-```bash
-npm install jose
+### Key Changes
+
+```diff
+- import { NextResponse } from "next/server";
+- import type { NextRequest } from "next/server";
+- import { jwtVerify } from "jose";
+- import { routing } from "./i18n/routing";
+- 
+- export async function middleware(request: NextRequest) { ... }
+- 
+- export const config = {
+-   matcher: ["/admin/:path*", "/trainer-dashboard/:path*", ...]
+- };
+
++ import { NextResponse } from "next/server";
++ import type { NextRequest } from "next/server";
++ import { jwtVerify } from "jose";
++ import createMiddleware from "next-intl/middleware";
++ import { routing } from "./i18n/routing";
++ 
++ const intlMiddleware = createMiddleware(routing);
++ 
++ export async function middleware(request: NextRequest) {
++   // 1. Handle i18n FIRST
++   const intlResponse = intlMiddleware(request);
++   if (intlResponse.status === 307 || intlResponse.status === 308) {
++     return intlResponse;
++   }
++   // 2. Then role checks...
++ }
++ 
++ export const config = {
++   matcher: ["/((?!api|_next|...).*)"]  // Same as old working version
++ };
 ```
 
-`jose` is used in middleware to verify JWT tokens without NextAuth internals.
+---
 
+## Deployment Steps
 
-### Step 1b: Install shadcn/ui dropdown-menu (if missing)
-
-If you get build error about `@/components/ui/dropdown-menu`, install it:
-
-```bash
-# Option A: Via shadcn CLI
-npx shadcn add dropdown-menu
-
-# Option B: Manual install
-npm install @radix-ui/react-dropdown-menu
-# Then copy components/ui/dropdown-menu.tsx from this archive
-```
-
-### Step 2: Update environment variables
-
-Ensure `AUTH_SECRET` or `NEXTAUTH_SECRET` is set (required for JWT verification in middleware):
+### Step 1: Replace middleware.ts
 
 ```bash
-AUTH_SECRET=your-secret-here
-# or
-NEXTAUTH_SECRET=your-secret-here
+# Copy the fixed middleware.ts to project root
+cp middleware.ts /path/to/project/middleware.ts
 ```
 
-### Step 3: Copy files
+### Step 2: Verify i18n/routing.ts exists
 
-Extract ZIP to project root.
+```typescript
+// i18n/routing.ts
+import { defineRouting } from "next-intl/routing";
+import { createNavigation } from "next-intl/navigation";
 
-### Step 4: Build
+export const routing = defineRouting({
+  locales: ["en", "ru"],
+  defaultLocale: "en",
+  localePrefix: "always",
+});
+
+export const { Link, redirect, usePathname, useRouter } = createNavigation(routing);
+```
+
+### Step 3: Build
 
 ```bash
 npm run build
 ```
 
+### Step 4: Test locally
+
+```bash
+npm run dev
+# Visit http://localhost:3000/ → should redirect to /en
+# Visit http://localhost:3000/en → should show homepage
+# Visit http://localhost:3000/ru → should show homepage (RU)
+```
+
 ### Step 5: Deploy
 
 ```bash
-git add .
-git commit -m "feat: role selection and access control"
+git add middleware.ts
+git commit -m "hotfix: restore next-intl middleware with role protection"
 git push
 ```
 
 ---
 
-## How It Works
+## Testing Checklist
 
-### Login Flow
-
-```
-User enters email/password
-         │
-         ▼
-POST /api/auth/check-roles
-         │
-         ▼
-Returns available roles:
-  - user (everyone)
-  - trainer (if role=trainer or admin with trainerProfile)
-  - admin (if role=admin)
-         │
-         ▼
-If 1 role → login directly
-If 2+ roles → show RoleSelector
-         │
-         ▼
-User selects role
-         │
-         ▼
-signIn("credentials", { activeRole: "trainer" })
-         │
-         ▼
-JWT contains selected role
-Session uses selected role
-Redirect to appropriate dashboard
-```
-
-### Access Control
-
-| Route | Required Role | Redirect If No Access |
-|-------|--------------|----------------------|
-| `/admin/*` | `admin` | `/` (homepage) |
-| `/trainer-dashboard/*` | `trainer` or `admin` | `/` (homepage) |
-| `/dashboard/*` | any authenticated | `/account` (login) |
-
-### Role Switching
-
-Admin sees "Switch Role" button in navbar:
-- Admin → Trainer Dashboard
-- Admin → User Dashboard
-- Trainer → User Dashboard
-
-Switching requires page refresh (session update).
+- [ ] `/` redirects to `/en`
+- [ ] `/en` shows homepage
+- [ ] `/ru` shows homepage (RU)
+- [ ] `/trainers` shows trainers listing
+- [ ] `/admin` redirects to `/account` (not logged in)
+- [ ] `/trainer-dashboard` redirects to `/account` (not logged in)
+- [ ] Logged-in admin can access `/admin`
+- [ ] Logged-in trainer can access `/trainer-dashboard`
+- [ ] Role switching still works
 
 ---
 
-## Testing
+## Notes
 
-### Test 1: User with single role (user)
-```
-Login → directly to /dashboard
-No role selector shown
-```
-
-### Test 2: User with trainer role
-```
-Login → directly to /trainer-dashboard
-```
-
-### Test 3: Admin with trainer profile
-```
-Login → role selector shown:
-  [ ] Administrator
-  [ ] Coach / Trainer  
-  [ ] Runner / Traveler
-Select "Coach / Trainer" → /trainer-dashboard
-```
-
-### Test 4: Access control
-```
-As user, try /admin → redirected to /
-As trainer, try /admin → redirected to /
-As admin, try /trainer-dashboard → allowed
-```
-
-### Test 5: Role switching
-```
-As admin on /admin
-Click "Switch Role" → "Trainer Dashboard"
-Redirected to /trainer-dashboard with trainer role
-```
+- **next-intl middleware MUST run first** — it handles locale detection and redirects
+- **Role checks run AFTER** — on the already-localized path (`/en/admin`, `/ru/admin`)
+- **Matcher must include ALL routes** — next-intl needs to intercept `/` for redirect
 
 ---
 
-## Database Changes
-
-None required. Uses existing `User.role` field.
-
----
-
-## Troubleshooting
-
-### "Cannot verify JWT in middleware"
-Ensure `AUTH_SECRET` or `NEXTAUTH_SECRET` is set and matches the one used for signing.
-
-### "Role not updated after switch"
-Role switching requires page refresh. The `switch-role` API returns redirect URL, client navigates to it.
-
-### "check-roles returns 401"
-Verify email/password. This endpoint uses same bcrypt comparison as login.
-
----
-
-## Next Steps
-
-After this is working, proceed to Phase 2: Revision Workflow for published trainer profiles.
+*Hotfix for Role Selection v1.0.0. Original feature remains intact; only middleware execution order fixed.*

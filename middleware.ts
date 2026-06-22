@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import createMiddleware from "next-intl/middleware";
+import { routing } from "./i18n/routing";
 
-const SECRET = new TextEncoder().encode(process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "");
+const SECRET = new TextEncoder().encode(
+  process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || ""
+);
 
-/**
- * Decode JWT token from cookie to get role
- */
+// next-intl middleware — handles / → /en redirect, locale detection, etc.
+const intlMiddleware = createMiddleware(routing);
+
 async function getRoleFromToken(request: NextRequest): Promise<string | null> {
-  const tokenCookie = 
+  const tokenCookie =
     request.cookies.get("__Secure-authjs.session-token")?.value ||
     request.cookies.get("authjs.session-token")?.value ||
     request.cookies.get("next-auth.session-token")?.value;
@@ -26,14 +30,39 @@ async function getRoleFromToken(request: NextRequest): Promise<string | null> {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check for session cookie
+  // ─── STEP 1: Handle i18n routing FIRST ───
+  // next-intl handles: / → /en, locale detection, rewrites, etc.
+  const intlResponse = intlMiddleware(request);
+
+  // If next-intl wants to redirect (307/308), return immediately
+  if (intlResponse.status === 307 || intlResponse.status === 308) {
+    return intlResponse;
+  }
+
+  // ─── STEP 2: Role-based protection for protected routes ───
   const hasSession =
     request.cookies.has("__Secure-authjs.session-token") ||
-    request.cookies.has("authjs.session-token") ||
-    request.cookies.has("next-auth.session-token");
+    request.cookies.get("authjs.session-token") ||
+    request.cookies.get("next-auth.session-token");
+
+  // Helper: check if pathname matches protected route (with or without locale prefix)
+  const isAdminRoute =
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/en/admin") ||
+    pathname.startsWith("/ru/admin");
+
+  const isTrainerRoute =
+    pathname.startsWith("/trainer-dashboard") ||
+    pathname.startsWith("/en/trainer-dashboard") ||
+    pathname.startsWith("/ru/trainer-dashboard");
+
+  const isUserDashboard =
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/en/dashboard") ||
+    pathname.startsWith("/ru/dashboard");
 
   // ─── ADMIN ROUTES ───
-  if (pathname.startsWith("/admin") || pathname.startsWith("/ru/admin")) {
+  if (isAdminRoute) {
     if (!hasSession) {
       return NextResponse.redirect(new URL("/account", request.url));
     }
@@ -44,7 +73,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // ─── TRAINER DASHBOARD ROUTES ───
-  if (pathname.startsWith("/trainer-dashboard") || pathname.startsWith("/ru/trainer-dashboard")) {
+  if (isTrainerRoute) {
     if (!hasSession) {
       return NextResponse.redirect(new URL("/account", request.url));
     }
@@ -55,22 +84,20 @@ export async function middleware(request: NextRequest) {
   }
 
   // ─── USER DASHBOARD ROUTES ───
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/ru/dashboard")) {
+  if (isUserDashboard) {
     if (!hasSession) {
       return NextResponse.redirect(new URL("/account", request.url));
     }
   }
 
-  return NextResponse.next();
+  // Return next-intl response (may include rewrites for localized pages)
+  return intlResponse;
 }
 
 export const config = {
+  // IMPORTANT: Must match ALL routes (same as old working middleware)
+  // next-intl needs this to intercept / and add locale prefix
   matcher: [
-    "/admin/:path*",
-    "/ru/admin/:path*",
-    "/trainer-dashboard/:path*",
-    "/ru/trainer-dashboard/:path*",
-    "/dashboard/:path*",
-    "/ru/dashboard/:path*",
+    "/((?!api|_next|_vercel|videos|images|uploads|favicon.ico|robots.txt|sitemap.xml|manifest.json).*)",
   ],
 };
