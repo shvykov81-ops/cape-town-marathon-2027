@@ -16,22 +16,21 @@ async function getRoleFromToken(request: NextRequest): Promise<string | null> {
     request.cookies.get("authjs.session-token")?.value ||
     request.cookies.get("next-auth.session-token")?.value;
 
-  console.log("[DEBUG] Token cookie found:", !!tokenCookie);
-
   if (!tokenCookie) return null;
 
   try {
     const { payload } = await jwtVerify(tokenCookie, SECRET, { clockTolerance: 60 });
-    console.log("[DEBUG] JWT payload:", JSON.stringify(payload));
     return (payload.role as string) || null;
-  } catch (e) {
-    console.log("[DEBUG] JWT verify error:", e);
+  } catch {
     return null;
   }
 }
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  const { pathname } = request.nextUrl;
+
+  // PROTECTED ROUTES: check auth BEFORE next-intl (which returns 307 for these routes)
+  const isAdminRoute
 
 
 
@@ -44,43 +43,19 @@ export async function middleware(request: NextRequest) {
 
 
 
-
-;
-
-  console.log("[DEBUG] pathname:", pathname);
-
-  const intlResponse = intlMiddleware(request);
-
-  if (intlResponse.status === 307 || intlResponse.status === 308) {
-    console.log("[DEBUG] intl redirect:", intlResponse.status);
-    return intlResponse;
-  }
-
-  const hasSession =
-    request.cookies.has("__Secure-authjs.session-token") ||
- 
-
-
-
-
-
-
-
-
-
-
-
-
-   request.cookies.has("authjs.session-token") ||
-    request.cookies.has("next-auth.session-token");
-
-  console.log("[DEBUG] hasSession:", hasSession);
-
-  const isAdminRoute =
+ =
     pathname.startsWith("/admin") ||
     pathname.startsWith("/en/admin") ||
     pathname.startsWith("/ru/admin");
 
+  const isTrainerRoute =
+    pathname.startsWith("/trainer-dashboard") ||
+    pathname.startsWith("/en/trainer-dashboard") ||
+    pathname.startsWith("/ru/trainer-dashboard");
+
+  const isDashboardRoute =
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/en/dashboard") |
 
 
 
@@ -90,48 +65,86 @@ export async function middleware(request: NextRequest) {
 
 
 
-  console.log("[DEBUG] isAdminRoute:", isAdminRoute);
 
-  if (isAdminRoute) {
-    if (!hasSession) {
-      console.log("[DEBUG] No session, redirect to /account");
+
+|
+    pathname.startsWith("/ru/dashboard");
+
+  if (isAdminRoute || isTrainerRoute || isDashboardRoute) {
+    const hasSession =
+      request.cookies.has("__Secure-authjs.session-token") ||
+      request.cookies.has("authjs.session-token") ||
+      request.cookies.has("next-auth.session-token");
+
+ 
+
+
+
+
+
+
+
+
+   if (!hasSession) {
       return NextResponse.redirect(new URL("/account", request.url));
     }
- 
+
+    const role = await getRoleFromToken(request);
+
+    if (isAdminRoute && role !== "admin") {
+      re
 
 
 
 
 
 
+turn NextResponse.redirect(new URL("/", request.url));
+    }
 
-   const role = await getRoleFromToken(request);
-    console.log("[DEBUG] Role from token:", role);
-    if (role !== "admin") {
-      console.log("[DEBUG] Role !== admin, redirect to /");
+    if (isTrainerRoute && role !== "trainer" && role !== "admin") {
       return NextResponse.redirect(new URL("/", request.url));
     }
+
+
+
+
+
+
+
+
+    // Authorized — pass through, skip next-intl for these routes
+    return NextResponse.next();
+  }
+
+  // PUBLIC ROUTES: use next-intl normally
  
 
 
 
 
+ const intlResponse = intlMiddleware(request);
 
- }
+  if (intlResponse.status === 307 || intlResponse.status === 308) {
+    return intlResponse;
+  }
 
-  console.log("[DEBUG] Pass through");
+
+
+
+
+
   return intlResponse;
 }
 
 export const config = {
-
-
-
-
-
-
-
   matcher: [
-    "/((?!api|_next|_vercel|videos|images|uploads|favicon.ico|robots.txt|sitemap.xml|manifest.json).*)",
+ 
+
+
+
+
+
+   "/((?!api|_next|_vercel|videos|images|uploads|favicon.ico|robots.txt|sitemap.xml|manifest.json).*)",
   ],
 };
