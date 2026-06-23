@@ -3,7 +3,6 @@
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useState, useCallback } from "react";
-import { updateRoleAction } from "@/app/actions/role-switch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,24 +39,29 @@ export function RoleSwitcher() {
     setIsLoading(true);
 
     try {
-      // Use Server Action to directly update the JWT cookie
-      // This bypasses the unstable_update issue completely
-      const result = await updateRoleAction(role);
+      // Use API route instead of Server Action for cookie manipulation
+      const res = await fetch("/api/auth/update-role", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
+      });
 
-      if (!result.success) {
-        console.error("Role switch failed:", result.error);
-        alert("Cannot switch role: " + result.error);
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        console.error("Role switch failed:", data.error);
+        alert("Cannot switch role: " + (data.error || "Unknown error"));
         setIsLoading(false);
         return;
       }
 
       // Build redirect URL with locale
       const locale = pathname.startsWith("/ru") ? "ru" : "en";
-      const redirectUrl = `/${locale}${result.redirectUrl}?_t=${Date.now()}`;
+      const redirectUrl = `/${locale}${data.redirectUrl}?_t=${Date.now()}`;
 
       console.log("[RoleSwitcher] Switched to:", role, "→", redirectUrl);
 
-      // Hard reload — middleware will see the new cookie immediately
+      // Hard reload — middleware will see the new cookie
       window.location.href = redirectUrl;
 
     } catch (error) {
