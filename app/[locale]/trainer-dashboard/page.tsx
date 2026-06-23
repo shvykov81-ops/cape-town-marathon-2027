@@ -9,7 +9,6 @@ import Image from "next/image";
 import {
   ArrowLeft,
   UserCircle,
-  ImageIcon,
   CalendarDays,
   Star,
   Eye,
@@ -484,7 +483,7 @@ export default function TrainerDashboardPage() {
             {/* Photo Grid */}
             {allPhotos.length === 0 ? (
               <div className="text-center py-16 text-white/30">
-                <ImageIcon className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                <svg className="w-12 h-12 mx-auto mb-4 opacity-30" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
                 <p>{t("photos.empty")}</p>
               </div>
             ) : (
@@ -539,12 +538,4 @@ export default function TrainerDashboardPage() {
   );
 }
 
-function ImageIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-      <circle cx="9" cy="9" r="2" />
-      <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-    </svg>
-  );
-}
+
