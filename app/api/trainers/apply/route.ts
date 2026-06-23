@@ -38,10 +38,11 @@ export async function POST(req: NextRequest) {
 
   const userId = session.user.id;
 
-  const existing = await prisma.trainer.findFirst({ where: { userId } });
-  if (existing) {
+  // Check if user already has a trainer profile
+  const existingTrainer = await prisma.trainer.findFirst({ where: { userId } });
+  if (existingTrainer) {
     return NextResponse.json(
-      { error: "You already have a trainer profile", status: existing.status },
+      { error: "You already have a trainer profile", status: existingTrainer.status },
       { status: 400 }
     );
   }
@@ -66,15 +67,23 @@ export async function POST(req: NextRequest) {
 
   const slug = generateSlug(user.name || user.email || "trainer");
 
+  // ─── INSTANT TRAINER ACCESS: Create everything in one transaction ───
   const [application, trainer] = await prisma.$transaction([
-    prisma.trainerApplication.create({
-      data: {
+    // 1. Upsert application record (update if exists, create if not)
+    prisma.trainerApplication.upsert({
+      where: { userId },
+      update: {
+        status: "APPROVED",
+        note: parsed.data.experience || null,
+      },
+      create: {
         userId,
         status: "APPROVED",
         note: parsed.data.experience || null,
       },
     }),
 
+    // 2. Create trainer profile with PUBLISHED status
     prisma.trainer.create({
       data: {
         userId,
@@ -97,6 +106,7 @@ export async function POST(req: NextRequest) {
       },
     }),
 
+    // 3. Update user role to trainer
     prisma.user.update({
       where: { id: userId },
       data: { role: "trainer" },

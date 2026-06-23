@@ -50,6 +50,9 @@
     "statCoaches": "Coaches"
   },
   "trainers": {
+    "badge": "World-Class Coaches",
+    "title": "Train with the Best",
+    "subtitle": "Certified marathon coaches who will prepare you for the ultimate challenge and guide you through Cape Town.",
     "cta": {
       "applyButton": "Apply as Coach",
       "title": "Are you a coach?",
