@@ -1,81 +1,110 @@
-# MIGRATION_GUIDE: Fix Admin Access & Role Switching
+# MIGRATION GUIDE: Role Selection Fix v1.0.0
 
 ## Problem
-Admin users cannot access `/admin` panel. Two symptoms:
-1. After selecting "Admin" role → redirect to homepage
-2. Direct access to `/admin` → "Page not found" or redirect to `/`
+Admin users cannot access `/admin` after switching roles. They get redirected to homepage.
+Trainer switch works, admin switch fails.
 
-## Root Causes
-1. **middleware.ts**: next-intl middleware runs AFTER role checks, so `/admin` never gets locale prefix
-2. **admin/layout.tsx**: Server Component `redirect("/")` fires before cookie updates, AND redirects without locale
-3. **RoleSwitcher**: `router.refresh()` creates race condition with cookie update
-4. **auth.ts**: JWT callback correctly updates `token.role`, but `originalRole` must be preserved
+## Root Cause
+1. **middleware.ts** used `jose.jwtVerify()` on NextAuth v5's encrypted session token → always fails with "Invalid Compact JWS" → role = null → admin routes denied.
+2. **RoleSwitcher** used redirect URLs without locale prefix (`/admin` instead of `/ru/admin`).
+3. No mechanism to communicate role to Edge middleware since NextAuth v5 tokens are encrypted.
 
-## Files to Replace
+## Solution
+Introduce unencrypted `x-active-role` cookie set server-side via new API endpoint. Middleware reads this cookie directly (no decryption needed).
 
-### 1. `middleware.ts` (root)
-**Changes:**
-- Run `intlMiddleware` FIRST (before role checks)
-- Add `getLocaleFromPathname()` helper
-- All redirects include locale prefix (`/${locale}/...`)
-- Return intlResponse redirects immediately (307/308)
+## Files Changed
 
-### 2. `app/[locale]/admin/layout.tsx`
-**Changes:**
-- Remove `redirect("/")` — replace with "Access Denied" UI
-- Actual access control happens in middleware (which reads fresh cookie)
-- Shows current role for debugging
+| File | Action | Description |
+|------|--------|-------------|
+| `middleware.ts` | **Replace** | Reads `x-active-role` cookie instead of decrypting JWT |
+| `app/api/auth/set-role-cookie/route.ts` | **NEW** | Server-side API to set/clear role cookies |
+| `app/api/auth/switch-role/route.ts` | **Replace** | Returns `redirectPath` (without locale) |
+| `components/auth/role-switcher.tsx` | **Replace** | Calls set-role-cookie + locale-aware navigation |
+| `app/[locale]/account/page.tsx` | **Patch** | Call set-role-cookie after sign-in |
 
-### 3. `auth.ts` (root)
-**Changes:**
-- Preserve `originalRole` in JWT callback during role switch
-- `originalRole` never changes — allows switching back to base role
+## Installation
 
-### 4. `components/navigation/RoleSwitcher.tsx` (or wherever RoleSwitcher is)
-**Changes:**
-- Remove `router.refresh()` — use only `window.location.href`
-- Build redirect URL with locale prefix (`/${locale}/admin`)
-- Add 300ms delay before reload to ensure cookie is written
-- Use `originalRole` from session to determine available roles
-
-## Testing Steps
-
-### Test 1: Login as Admin
+### Step 1: Apply files
 ```bash
-curl -X POST https://your-app.vercel.app/api/auth/check-roles \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@example.com","password":"yourpassword"}'
+# Extract ZIP to project root
+cd /path/to/cape-town-marathon-2027
+# Copy files from ZIP to corresponding locations
 ```
-Expected: `{"roles":[{"role":"user",...},{"role":"trainer",...},{"role":"admin",...}]}`
 
-### Test 2: Switch to Admin Role
-1. Login as admin user
-2. Open RoleSwitcher dropdown
-3. Click "Admin"
-4. Expected: Redirect to `/en/admin` (or `/ru/admin`)
-5. Page should load admin dashboard
+### Step 2: Patch account page
+In `app/[locale]/account/page.tsx`, add the `setRoleCookie` helper and call it after `signIn()`:
 
-### Test 3: Direct Access
+```typescript
+// Add this helper function inside AccountPage component:
+async function setRoleCookie(role: string) {
+  await fetch("/api/auth/set-role-cookie", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ role }),
+  });
+}
+
+// In performSignIn(), AFTER signIn() succeeds, BEFORE router.push():
+await setRoleCookie(role);
+
+// In the useEffect for authenticated redirect, add:
+fetch("/api/auth/set-role-cookie", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ role }),
+});
+```
+
+### Step 3: Add sign-out cleanup (optional but recommended)
+In your sign-out handler, call:
+```typescript
+await fetch("/api/auth/set-role-cookie", { method: "DELETE" });
+await signOut({ callbackUrl: "/" });
+```
+
+### Step 4: Deploy
+```bash
+git add .
+git commit -m "fix: Role Selection — admin middleware access + locale-aware redirects"
+git push
+```
+
+## Testing
+
+### Test 1: Admin login
+1. Go to `/account`
+2. Login as admin user
+3. Select "Administrator" role
+4. **Expected:** Redirected to `/ru/admin` (or `/en/admin`), page loads
+
+### Test 2: Admin → Trainer switch
+1. In admin panel, click "Switch Role" → "Trainer Dashboard"
+2. **Expected:** Redirected to `/ru/trainer-dashboard`
+
+### Test 3: Trainer → Admin switch
+1. In trainer dashboard, click "Switch Role" → "Admin Panel"
+2. **Expected:** Redirected to `/ru/admin`, page loads
+
+### Test 4: Direct URL access
 1. Login as admin, switch to admin role
-2. Navigate directly to `/admin`
-3. Expected: Redirect to `/en/admin` (by next-intl), then admin panel loads
+2. Open `/ru/admin` directly in new tab
+3. **Expected:** Page loads (middleware reads cookie)
 
-### Test 4: Non-Admin Access
+### Test 5: Unauthorized access
 1. Login as regular user
-2. Try to access `/en/admin`
-3. Expected: Redirect to `/en` (homepage with locale)
+2. Try to open `/ru/admin`
+3. **Expected:** Redirected to `/ru`
 
-### Test 5: Switch Back
-1. In admin panel, switch to "User" role
-2. Expected: Redirect to `/en/dashboard` or `/en`
+## Security Notes
+- `x-active-role` cookie is `httpOnly` + `secure` (in production) + `sameSite=lax`
+- The cookie is a "hint" for middleware — actual authorization still happens in API routes via `auth()`
+- If cookie is tampered, user might bypass middleware redirect but API routes will reject unauthorized requests
+- Cookie is synchronized with actual NextAuth session on every role switch
 
-## Environment Variables
-No new env vars required.
-
-## Database Changes
-No migration required.
-
-## Post-Deploy Verification
-1. Check Vercel logs for middleware execution
-2. Verify cookie `authjs.session-token` contains `role: "admin"` after switch
-3. Test in incognito window with fresh session
+## Rollback
+If issues occur, restore original files from git:
+```bash
+git checkout HEAD -- middleware.ts app/api/auth/switch-role/route.ts components/auth/role-switcher.tsx
+# Remove new file:
+rm -rf app/api/auth/set-role-cookie
+```

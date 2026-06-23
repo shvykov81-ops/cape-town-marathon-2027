@@ -28,10 +28,21 @@ export default function AccountPage() {
     const [step, setStep] = useState<"login" | "role-select">("login");
     const [userRoles, setUserRoles] = useState<UserRoleInfo[]>([]);
 
+    // Helper: set unencrypted role cookie for Edge middleware
+    async function setRoleCookie(role: string) {
+        await fetch("/api/auth/set-role-cookie", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ role }),
+        });
+    }
+
     // Redirect if already logged in
     useEffect(() => {
         if (status === "authenticated" && session?.user?.role) {
             const role = session.user.role;
+            // Set cookie for middleware before redirect
+            setRoleCookie(role);
             if (role === "admin") router.push(`/${locale}/admin`);
             else if (role === "trainer") router.push(`/${locale}/trainer-dashboard`);
             else router.push(`/${locale}/dashboard`);
@@ -93,6 +104,8 @@ export default function AccountPage() {
                     activeRole: "user",
                     redirect: false,
                 });
+                // Set role cookie for middleware
+                await setRoleCookie("user");
                 router.push(`/${locale}/dashboard`);
                 router.refresh();
             }
@@ -116,6 +129,9 @@ export default function AccountPage() {
             setLoading(false);
             return;
         }
+
+        // Set unencrypted role cookie for Edge middleware
+        await setRoleCookie(role);
 
         // Redirect based on selected role with locale
         if (role === "admin") router.push(`/${locale}/admin`);

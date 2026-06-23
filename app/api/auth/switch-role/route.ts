@@ -5,8 +5,7 @@ import { prisma } from "@/lib/prisma";
 /**
  * POST /api/auth/switch-role
  * Validate role switch permissions.
- * Actual session update happens client-side via useSession().update()
- * which triggers the JWT callback with trigger: "update".
+ * Returns redirect path (without locale) — client prepends current locale.
  */
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -40,12 +39,11 @@ export async function POST(request: NextRequest) {
   // Validate permissions
   const canBeAdmin = user.role === "admin";
   const canBeTrainer = user.role === "trainer" || user.role === "admin";
-  const canBeUser = true;
 
   let allowed = false;
   if (role === "admin" && canBeAdmin) allowed = true;
   if (role === "trainer" && canBeTrainer) allowed = true;
-  if (role === "user" && canBeUser) allowed = true;
+  if (role === "user") allowed = true;
 
   if (!allowed) {
     return NextResponse.json(
@@ -54,16 +52,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Return success — client will call useSession().update() to update JWT
-  const redirectUrl =
-    role === "admin" ? "/admin" :
-    role === "trainer" ? "/trainer-dashboard" :
-    "/dashboard";
+  // Return redirect PATH (without locale prefix)
+  const redirectPath =
+    role === "admin" ? "admin" :
+    role === "trainer" ? "trainer-dashboard" :
+    "dashboard";
 
   return NextResponse.json({
     success: true,
     role,
     message: `Switched to ${role} role`,
-    redirectUrl,
+    redirectPath,
   });
 }
