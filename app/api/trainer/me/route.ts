@@ -11,14 +11,14 @@ const trainerSelfServiceUpdateSchema = z.object({
   bio: z.string().max(5000).optional(),
   specialties: z.array(z.string().max(50)).max(20).optional(),
   languages: z.array(z.string().max(20)).max(10).optional(),
-  credentials: z.array(z.string().max(200)).max(10).optional(),
-  hourlyRate: z.number().min(0).max(10000).optional(),
-  currency: z.string().max(3).optional(),
-  isAvailable: z.boolean().optional(),
+  credentials: z.string().max(2000).optional(),
+  experienceYears: z.number().min(0).max(100).optional(),
+  maxClientsPerMonth: z.number().min(0).max(1000).optional(),
   photos: z.array(z.string().url().max(500)).max(20).optional(),
-  instagram: z.string().max(100).optional(),
-  strava: z.string().max(100).optional(),
-  website: z.string().max(200).optional(),
+  instagramUrl: z.string().max(200).optional(),
+  stravaUrl: z.string().max(200).optional(),
+  tripsterUrl: z.string().max(200).optional(),
+  websiteUrl: z.string().max(200).optional(),
 });
 
 export async function GET() {
@@ -83,8 +83,8 @@ export async function PATCH(req: NextRequest) {
   const sanitized: Record<string, any> = {};
   const allowedFields = [
     "displayName", "headline", "bio", "specialties", "languages",
-    "credentials", "hourlyRate", "currency", "isAvailable", "photos",
-    "instagram", "strava", "website",
+    "credentials", "experienceYears", "maxClientsPerMonth", "photos",
+    "instagramUrl", "stravaUrl", "tripsterUrl", "websiteUrl",
   ];
 
   for (const key of allowedFields) {
@@ -100,66 +100,26 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
-  // ─── DRAFT: direct update ───
-  if (trainer.status === "DRAFT") {
-    const updated = await prisma.trainer.update({
-      where: { id: trainer.id },
-      data: sanitized,
-    });
+  // ─── ALL STATUSES: direct update (no revision workflow) ───
+  const updated = await prisma.trainer.update({
+    where: { id: trainer.id },
+    data: {
+      ...sanitized,
+      updatedAt: new Date(),
+    },
+  });
 
-    // Use correct Prisma fields: changeType, fieldName, oldValue, newValue
-    await prisma.trainerProfileChange.create({
-      data: {
-        trainerId: trainer.id,
-        changedBy: session.user.id,
-        changeType: "UPDATE",
-        fieldName: "profile",
-        oldValue: "",
-        newValue: JSON.stringify(sanitized),
-      },
-    });
+  await prisma.trainerProfileChange.create({
+    data: {
+      trainerId: trainer.id,
+      changedBy: session.user.id,
+      changeType: "UPDATE",
+      fieldName: "profile",
+      oldValue: "",
+      newValue: JSON.stringify(sanitized),
+    },
+  });
 
-    revalidateTag("trainers");
-    return NextResponse.json(updated);
-  }
-
-  // ─── PUBLISHED: create revision ───
-  if (trainer.status === "PUBLISHED") {
-    const existingRevision = await prisma.trainerRevision.findFirst({
-      where: { trainerId: trainer.id, status: { in: ["DRAFT", "PENDING"] } },
-    });
-
-    if (existingRevision) {
-      return NextResponse.json(
-        { error: "You have a pending revision. Wait for admin approval." },
-        { status: 409 }
-      );
-    }
-
-    const revision = await prisma.trainerRevision.create({
-      data: {
-        trainerId: trainer.id,
-        data: sanitized,
-        status: "DRAFT",
-      },
-    });
-
-    await prisma.trainerProfileChange.create({
-      data: {
-        trainerId: trainer.id,
-        changedBy: session.user.id,
-        changeType: "UPDATE",
-        fieldName: "revision",
-        oldValue: "",
-        newValue: revision.id,
-      },
-    });
-
-    return NextResponse.json({
-      message: "Revision created. Submit for admin approval.",
-      revision,
-    });
-  }
-
-  return NextResponse.json({ error: "Invalid trainer status" }, { status: 400 });
+  revalidateTag("trainers");
+  return NextResponse.json(updated);
 }

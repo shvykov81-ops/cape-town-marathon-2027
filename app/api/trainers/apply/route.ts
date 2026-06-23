@@ -23,7 +23,6 @@ function generateSlug(name: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  // Rate limiting: 3 applications per hour per IP
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   if (!checkRateLimit(ip, 3)) {
     return NextResponse.json(
@@ -39,11 +38,7 @@ export async function POST(req: NextRequest) {
 
   const userId = session.user.id;
 
-  // Check if user already has a trainer profile
-  const existing = await prisma.trainer.findFirst({
-    where: { userId },
-  });
-
+  const existing = await prisma.trainer.findFirst({ where: { userId } });
   if (existing) {
     return NextResponse.json(
       { error: "You already have a trainer profile", status: existing.status },
@@ -51,13 +46,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Validate optional body
   let body = {};
-  try {
-    body = await req.json();
-  } catch {
-    // Empty body is OK
-  }
+  try { body = await req.json(); } catch { /* empty body OK */ }
   const parsed = applicationSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -66,30 +56,25 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Get user details for trainer creation
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { name: true, email: true, firstName: true, lastName: true },
   });
-
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  // ─── INSTANT TRAINER ACCESS: Create everything in one transaction ───
   const slug = generateSlug(user.name || user.email || "trainer");
 
   const [application, trainer] = await prisma.$transaction([
-    // 1. Create application record (for audit/history)
     prisma.trainerApplication.create({
       data: {
         userId,
-        status: "APPROVED", // Auto-approved
+        status: "APPROVED",
         note: parsed.data.experience || null,
       },
     }),
 
-    // 2. Create trainer profile with DRAFT status
     prisma.trainer.create({
       data: {
         userId,
@@ -97,29 +82,27 @@ export async function POST(req: NextRequest) {
         firstName: user.firstName || user.name?.split(" ")[0] || "Coach",
         lastName: user.lastName || user.name?.split(" ").slice(1).join(" ") || "",
         displayName: user.name || "New Coach",
-        status: "DRAFT",
-        headline: "",
+        status: "PUBLISHED",
+        headline: null,
         bio: parsed.data.experience || "",
         specialties: parsed.data.specialties || [],
         languages: parsed.data.languages || [],
         photos: [],
-        credentials: [],
+        credentials: null,
         rating: 0,
         reviewCount: 0,
         profileViews: 0,
         bookingInquiries: 0,
-        isAvailable: true,
+        publishedAt: new Date(),
       },
     }),
 
-    // 3. Update user role to trainer
     prisma.user.update({
       where: { id: userId },
       data: { role: "trainer" },
     }),
   ]);
 
-  // Notify admin via Telegram (non-blocking)
   sendTrainerApplicationNotification({
     name: user.name || user.email,
     email: user.email,
@@ -127,19 +110,16 @@ export async function POST(req: NextRequest) {
     createdAt: application.createdAt,
   }).catch(console.error);
 
-  // Invalidate cache
   revalidateTag("trainers");
 
-  // Build response with role cookie set
   const response = NextResponse.json({
     success: true,
-    message: "Welcome! Your trainer profile has been created.",
+    message: "Welcome! Your trainer profile is live.",
     trainerId: trainer.id,
     slug: trainer.slug,
     redirectTo: "/trainer-dashboard",
   });
 
-  // Set role cookie for Edge middleware — instant access
   const cookieOptions = {
     httpOnly: true,
     sameSite: "lax" as const,
