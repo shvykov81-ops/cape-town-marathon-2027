@@ -48,7 +48,6 @@ export async function PATCH(
     return NextResponse.json({ error: "Trainer not found" }, { status: 404 });
   }
 
-  // Guard: trainer must have a userId to update role
   if (!trainer.userId) {
     return NextResponse.json({ error: "Trainer has no associated user" }, { status: 400 });
   }
@@ -76,12 +75,15 @@ export async function PATCH(
         }),
       ]);
 
+      // Use correct email signature: oldStatus + newStatus + actionUrl
       if (trainer.user?.email) {
         sendTrainerModerationEmail({
           to: trainer.user.email,
           trainerName: trainer.displayName || trainer.firstName,
-          action: "DELETED",
+          oldStatus: trainer.status,
+          newStatus: "DELETED",
           reason: reason || "Profile removed by admin",
+          actionUrl: `${process.env.NEXTAUTH_URL || ""}/trainers`,
         }).catch(console.error);
       }
 
@@ -119,8 +121,10 @@ export async function PATCH(
     sendTrainerModerationEmail({
       to: trainer.user.email,
       trainerName: trainer.displayName || trainer.firstName,
-      action: action as "APPROVE" | "SUSPEND",
+      oldStatus: trainer.status,
+      newStatus,
       reason: reason || undefined,
+      actionUrl: `${process.env.NEXTAUTH_URL || ""}/trainer-dashboard`,
     }).catch(console.error);
   }
 
