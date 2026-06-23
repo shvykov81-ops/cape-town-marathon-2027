@@ -107,12 +107,15 @@ export async function PATCH(req: NextRequest) {
       data: sanitized,
     });
 
+    // Use correct Prisma fields: changeType, fieldName, oldValue, newValue
     await prisma.trainerProfileChange.create({
       data: {
         trainerId: trainer.id,
-        type: "UPDATE",
         changedBy: session.user.id,
-        changes: JSON.stringify(sanitized),
+        changeType: "UPDATE",
+        fieldName: "profile",
+        oldValue: "",
+        newValue: JSON.stringify(sanitized),
       },
     });
 
@@ -144,9 +147,11 @@ export async function PATCH(req: NextRequest) {
     await prisma.trainerProfileChange.create({
       data: {
         trainerId: trainer.id,
-        type: "UPDATE",
         changedBy: session.user.id,
-        changes: JSON.stringify({ revisionId: revision.id, data: sanitized }),
+        changeType: "UPDATE",
+        fieldName: "revision",
+        oldValue: "",
+        newValue: revision.id,
       },
     });
 
