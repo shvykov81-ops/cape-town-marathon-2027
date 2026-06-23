@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -16,8 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Loader2, CheckCircle, X } from "lucide-react";
+import { ArrowRight, Loader2, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SPECIALTIES = [
@@ -37,6 +36,7 @@ export function CoachRecruitment() {
   const t = useTranslations("trainers");
   const locale = useLocale();
   const router = useRouter();
+  const { update } = useSession();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -67,44 +67,6 @@ export function CoachRecruitment() {
     }));
   };
 
-  const handleSubmit = async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const res = await fetch("/api/trainers/apply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Something went wrong");
-        setLoading(false);
-        return;
-      }
-
-      setSuccess(true);
-      setLoading(false);
-
-      // ─── INSTANT ACCESS: Set role cookie client-side ───
-      document.cookie = `x-active-role=trainer; path=/; max-age=${60 * 60 * 24 * 30}`;
-      document.cookie = `x-original-role=trainer; path=/; max-age=${60 * 60 * 24 * 30}`;
-
-      // Small delay to show success message, then redirect
-      setTimeout(() => {
-        setOpen(false);
-        // Force full reload so middleware sees new role cookie
-        window.location.href = `/${locale}/trainer-dashboard`;
-      }, 1500);
-    } catch {
-      setError("Network error. Please try again.");
-      setLoading(false);
-    }
-  };
-
   const handleApply = async () => {
     setError("");
     setLoading(true);
@@ -129,14 +91,18 @@ export function CoachRecruitment() {
         return;
       }
 
-      setSuccess(true);
-      setLoading(false);
+      // ─── UPDATE NEXTAUTH SESSION ───
+      // This triggers JWT callback with new role
+      await update({ activeRole: "trainer" });
 
-      // Set role cookies for instant middleware access
+      // Set role cookies for middleware (fallback)
       document.cookie = `x-active-role=trainer; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
       document.cookie = `x-original-role=trainer; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
 
-      // Force reload to /trainer-dashboard with new role
+      setSuccess(true);
+      setLoading(false);
+
+      // Force full reload so middleware sees new role
       setTimeout(() => {
         window.location.href = `/${locale}/trainer-dashboard`;
       }, 1200);
