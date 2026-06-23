@@ -15,6 +15,7 @@ const trainerSelfServiceUpdateSchema = z.object({
   experienceYears: z.number().min(0).max(100).optional(),
   maxClientsPerMonth: z.number().min(0).max(1000).optional(),
   photos: z.array(z.string().url().max(500)).max(20).optional(),
+  photoUrl: z.string().url().max(500).optional(),
   instagramUrl: z.string().max(200).optional(),
   stravaUrl: z.string().max(200).optional(),
   tripsterUrl: z.string().max(200).optional(),
@@ -84,7 +85,7 @@ export async function PATCH(req: NextRequest) {
   const allowedFields = [
     "displayName", "headline", "bio", "specialties", "languages",
     "credentials", "experienceYears", "maxClientsPerMonth", "photos",
-    "instagramUrl", "stravaUrl", "tripsterUrl", "websiteUrl",
+    "photoUrl", "instagramUrl", "stravaUrl", "tripsterUrl", "websiteUrl",
   ];
 
   for (const key of allowedFields) {
