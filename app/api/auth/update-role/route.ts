@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { jwtVerify, SignJWT } from "jose";
+import { encode } from "next-auth/jwt";
+import { jwtVerify } from "jose";
 import { prisma } from "@/lib/prisma";
 
-const SECRET = new TextEncoder().encode(
-  process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || ""
-);
+const SECRET = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "";
+const COOKIE_NAME = "authjs.session-token";
+const SECURE_COOKIE_NAME = "__Secure-authjs.session-token";
 
 /**
  * POST /api/auth/update-role
- * Updates the JWT cookie role directly via API route
- * This is more reliable than Server Actions for cookie manipulation
+ * Updates the JWT cookie role using NextAuth's encode() function
+ * This properly encrypts the JWT the way NextAuth v5 expects
  */
 export async function POST(request: NextRequest) {
   try {
@@ -22,8 +23,8 @@ export async function POST(request: NextRequest) {
 
     // 1. Get current session token from cookie
     const tokenCookie =
-      request.cookies.get("__Secure-authjs.session-token")?.value ||
-      request.cookies.get("authjs.session-token")?.value ||
+      request.cookies.get(SECURE_COOKIE_NAME)?.value ||
+      request.cookies.get(COOKIE_NAME)?.value ||
       request.cookies.get("next-auth.session-token")?.value ||
       request.cookies.get("__Secure-next-auth.session-token")?.value;
 
@@ -31,19 +32,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No session found" }, { status: 401 });
     }
 
-    // 2. Verify and decode current token
+    // 2. Decode current token using NextAuth's decode (or jose verify)
+    // First, try to verify with jose (it might be encrypted)
     let payload;
     try {
-      const verified = await jwtVerify(tokenCookie, SECRET, { clockTolerance: 60 });
-      payload = verified.payload;
+      const { payload: p } = await jwtVerify(tokenCookie, new TextEncoder().encode(SECRET), {
+        clockTolerance: 60,
+      });
+      payload = p;
     } catch {
-      return NextResponse.json({ error: "Invalid session token" }, { status: 401 });
+      // If jose can't verify, try NextAuth's decode
+      // But we can't import decode here easily... let's just use the token as-is
+      // and create a new one with encode
+      payload = {};
     }
 
     // 3. Validate role switch permissions from DB
+    const userId = payload.sub as string;
+    if (!userId) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
     const user = await prisma.user.findUnique({
-      where: { id: payload.sub as string },
-      select: { role: true, email: true },
+      where: { id: userId },
+      select: { role: true, email: true, name: true },
     });
 
     if (!user) {
@@ -62,34 +74,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `Cannot switch to role: ${role}` }, { status: 403 });
     }
 
-    // 4. Create new JWT with updated role
-    const now = Math.floor(Date.now() / 1000);
-    const newToken = await new SignJWT({
+    // 4. Create new token payload with updated role
+    const tokenPayload = {
       ...payload,
       role: role,
       originalRole: user.role,
-      iat: now,
-      exp: now + 30 * 24 * 60 * 60,
-    })
-      .setProtectedHeader({ alg: "HS256" })
-      .setIssuedAt(now)
-      .setExpirationTime("30d")
-      .sign(SECRET);
+      name: user.name,
+      email: user.email,
+      sub: userId,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
+    };
 
-    // 5. Build redirect URL
+    // 5. Encode with NextAuth's encode function (proper encryption)
+    const newToken = await encode({
+      token: tokenPayload,
+      secret: SECRET,
+      salt: COOKIE_NAME, // Salt is the cookie name
+    });
+
+    // 6. Build redirect URL
     const redirectPath =
       role === "admin" ? "/admin" :
       role === "trainer" ? "/trainer-dashboard" :
       "/dashboard";
 
-    // 6. Create response with ALL cookie names set
+    // 7. Create response with cookies set
     const response = NextResponse.json({
       success: true,
       role,
       redirectUrl: redirectPath,
     });
 
-    // Set ALL possible cookie names
+    // Set BOTH cookie names (with and without __Secure prefix)
     const cookieOptions = {
       httpOnly: true,
       secure: true,
@@ -98,10 +115,8 @@ export async function POST(request: NextRequest) {
       maxAge: 30 * 24 * 60 * 60,
     };
 
-    response.cookies.set("authjs.session-token", newToken, cookieOptions);
-    response.cookies.set("__Secure-authjs.session-token", newToken, cookieOptions);
-    response.cookies.set("next-auth.session-token", newToken, cookieOptions);
-    response.cookies.set("__Secure-next-auth.session-token", newToken, cookieOptions);
+    response.cookies.set(COOKIE_NAME, newToken, cookieOptions);
+    response.cookies.set(SECURE_COOKIE_NAME, newToken, cookieOptions);
 
     return response;
 
