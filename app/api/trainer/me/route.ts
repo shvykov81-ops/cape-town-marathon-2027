@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { revalidateTag } from "next/cache";
-import sanitizeHtml from "sanitize-html";
+import DOMPurify from "isomorphic-dompurify";
 
 const trainerSelfServiceUpdateSchema = z.object({
   displayName: z.string().min(1).max(100).optional(),
@@ -90,9 +90,9 @@ export async function PATCH(req: NextRequest) {
   for (const key of allowedFields) {
     if (data[key as keyof typeof data] !== undefined) {
       if (key === "bio") {
-        sanitized[key] = sanitizeHtml(data.bio || "", {
-          allowedTags: ["b", "i", "em", "strong", "a", "p", "br", "ul", "ol", "li"],
-          allowedAttributes: { a: ["href", "target"] },
+        sanitized[key] = DOMPurify.sanitize(data.bio || "", {
+          ALLOWED_TAGS: ["b", "i", "em", "strong", "a", "p", "br", "ul", "ol", "li"],
+          ALLOWED_ATTR: ["href", "target"],
         });
       } else {
         sanitized[key] = data[key as keyof typeof data];
