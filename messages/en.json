@@ -50,10 +50,28 @@
     "statCoaches": "Coaches"
   },
   "trainers": {
-    "badge": "World-Class Coaches",
-    "title": "Train with the Best",
-    "subtitle": "Certified marathon coaches who will prepare you for the ultimate challenge and guide you through Cape Town.",
-    "cta": "All Trainers"
+    "cta": {
+      "applyButton": "Apply as Coach",
+      "title": "Are you a coach?",
+      "subtitle": "Join our team of elite running coaches and help athletes achieve their goals",
+      "badge": "We're hiring coaches"
+    },
+    "apply": {
+      "title": "Apply",
+      "description": "Tell us about your experience and specialization",
+      "experience": "Experience",
+      "experiencePlaceholder": "Describe your coaching experience, certifications, achievements...",
+      "specialties": "Specialties",
+      "languages": "Languages",
+      "next": "Next",
+      "back": "Back",
+      "submit": "Submit Application",
+      "successTitle": "Application Submitted!",
+      "successDesc": "Your profile is created. Redirecting to dashboard...",
+      "redirecting": "Redirecting to dashboard...",
+      "error": "Error submitting application",
+      "networkError": "Network error. Please try again."
+    }
   },
   "newsletter": {
     "title": "Stay in the Race",
