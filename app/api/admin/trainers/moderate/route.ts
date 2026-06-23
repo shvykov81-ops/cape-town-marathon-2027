@@ -75,7 +75,6 @@ export async function PATCH(
         }),
       ]);
 
-      // Use correct email signature: oldStatus + newStatus + actionUrl
       if (trainer.user?.email) {
         sendTrainerModerationEmail({
           to: trainer.user.email,
@@ -105,15 +104,15 @@ export async function PATCH(
     },
   });
 
+  // Use correct Prisma fields: changeType, fieldName, oldValue, newValue
   await prisma.trainerProfileChange.create({
     data: {
       trainerId: id,
-      type: "UPDATE",
       changedBy: session.user.id,
-      changes: JSON.stringify({
-        status: { from: trainer.status, to: newStatus },
-        reason: reason || null,
-      }),
+      changeType: "UPDATE",
+      fieldName: "status",
+      oldValue: trainer.status,
+      newValue: newStatus,
     },
   });
 
