@@ -210,7 +210,7 @@ export default function TrainerDashboardPage() {
             {[
               { id: "overview", label: t("nav.overview"), icon: TrendingUp },
               { id: "profile", label: t("nav.profile"), icon: UserCircle },
-              { id: "photos", label: t("nav.photos"), icon: ImageIcon },
+              { id: "photos", label: t("nav.photos"), icon: Image },
             ].map((tab) => (
               <button
                 key={tab.id}
