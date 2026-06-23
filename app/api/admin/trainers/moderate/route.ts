@@ -126,20 +126,25 @@ export async function PATCH(
     }).catch(console.error);
   }
 
-  // ─── 3 arguments: trainer, oldStatus, adminName ───
   sendTrainerStatusChangeNotification(
-    trainer,           // arg 1: trainer object with displayName, firstName, lastName, slug, status
-    trainer.status,    // arg 2: oldStatus
-    session.user.name || session.user.email || "Admin"  // arg 3: adminName
+    trainer,
+    trainer.status,
+    session.user.name || session.user.email || "Admin"
   ).catch(console.error);
 
+  // ─── Notification model: id, userId, type, channel, status, payload, sentAt, readAt ───
   await prisma.notification.create({
     data: {
       userId: trainer.userId,
       type: "trainer_status_change",
-      title: action === "APPROVE" ? "Profile Published" : "Account Suspended",
-      message: notificationMessage,
-      link: "/trainer-dashboard",
+      channel: "in_app",
+      status: "sent",
+      payload: JSON.stringify({
+        title: action === "APPROVE" ? "Profile Published" : "Account Suspended",
+        message: notificationMessage,
+        link: "/trainer-dashboard",
+      }),
+      sentAt: new Date(),
     },
   });
 
