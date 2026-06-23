@@ -26,15 +26,16 @@ import {
 import { cn } from "@/lib/utils";
 
 interface TrainerProfilePageProps {
+  locale?: string;
   trainer: {
     id: string;
     slug: string;
-    firstName: string;
-    lastName: string;
-    displayName: string;
+    firstName: string | null;
+    lastName: string | null;
+    displayName: string | null;
     headline: string | null;
     bio: string | null;
-    bioHtml: string | null;
+    bioHtml?: string | null;
     photoUrl: string | null;
     photos: string[];
     specialties: string[];
