@@ -1,119 +1,81 @@
-# MIGRATION GUIDE — Role Switching Fix
-## Cape Town Marathon 2027
-
-**Version:** 1.0.2
-**Date:** 2026-06-22
-**Status:** CRITICAL FIX
-
----
+# MIGRATION_GUIDE: Fix Admin Access & Role Switching
 
 ## Problem
+Admin users cannot access `/admin` panel. Two symptoms:
+1. After selecting "Admin" role → redirect to homepage
+2. Direct access to `/admin` → "Page not found" or redirect to `/`
 
-After implementing role selection, switching roles via "Switch Role" dropdown does NOT work:
-- JWT token retains old role after switch
-- Middleware redirects back to old dashboard
-- Admin cannot switch to Trainer without trainerProfile
+## Root Causes
+1. **middleware.ts**: next-intl middleware runs AFTER role checks, so `/admin` never gets locale prefix
+2. **admin/layout.tsx**: Server Component `redirect("/")` fires before cookie updates, AND redirects without locale
+3. **RoleSwitcher**: `router.refresh()` creates race condition with cookie update
+4. **auth.ts**: JWT callback correctly updates `token.role`, but `originalRole` must be preserved
 
----
+## Files to Replace
 
-## Root Cause
+### 1. `middleware.ts` (root)
+**Changes:**
+- Run `intlMiddleware` FIRST (before role checks)
+- Add `getLocaleFromPathname()` helper
+- All redirects include locale prefix (`/${locale}/...`)
+- Return intlResponse redirects immediately (307/308)
 
-1. `switch-role` API only returned JSON — never updated JWT token
-2. `RoleSwitcher` used `window.location.href` without session update
-3. Admin required `trainerProfile` to act as trainer
+### 2. `app/[locale]/admin/layout.tsx`
+**Changes:**
+- Remove `redirect("/")` — replace with "Access Denied" UI
+- Actual access control happens in middleware (which reads fresh cookie)
+- Shows current role for debugging
 
----
+### 3. `auth.ts` (root)
+**Changes:**
+- Preserve `originalRole` in JWT callback during role switch
+- `originalRole` never changes — allows switching back to base role
 
-## Changes
+### 4. `components/navigation/RoleSwitcher.tsx` (or wherever RoleSwitcher is)
+**Changes:**
+- Remove `router.refresh()` — use only `window.location.href`
+- Build redirect URL with locale prefix (`/${locale}/admin`)
+- Add 300ms delay before reload to ensure cookie is written
+- Use `originalRole` from session to determine available roles
 
-### 1. app/api/auth/switch-role/route.ts
+## Testing Steps
 
-**Added:**
-- Import `unstable_update` from `@/auth`
-- Call `await unstable_update({ activeRole: role })` after validation
-- This triggers JWT callback with `trigger: "update"` + `session.activeRole`
-
-**Changed:**
-- Admin can switch to trainer WITHOUT trainerProfile
-
-### 2. components/auth/role-switcher.tsx
-
-**Changed:**
-- Use `useSession().update()` instead of `window.location.href`
-- Call `update({ activeRole: role })` after server validation
-- Use `router.push(href)` for navigation (SPA, no full reload)
-
-### 3. auth.ts
-
-**Added:**
-- Export `unstable_update` from NextAuth
-- Admin can ALWAYS be trainer (removed trainerProfile check)
-
-### 4. app/api/auth/check-roles/route.ts
-
-**Changed:**
-- Admin always sees "trainer" option (regardless of trainerProfile)
-
----
-
-## Deployment
-
+### Test 1: Login as Admin
 ```bash
-# 1. Copy files
-cp auth.ts /path/to/project/auth.ts
-cp app/api/auth/switch-role/route.ts /path/to/project/app/api/auth/switch-role/route.ts
-cp app/api/auth/check-roles/route.ts /path/to/project/app/api/auth/check-roles/route.ts
-cp components/auth/role-switcher.tsx /path/to/project/components/auth/role-switcher.tsx
-
-# 2. Build
-npm run build
-
-# 3. Commit
-git add auth.ts app/api/auth/switch-role/route.ts app/api/auth/check-roles/route.ts components/auth/role-switcher.tsx
-git commit -m "fix: role switching with JWT update"
-git push
+curl -X POST https://your-app.vercel.app/api/auth/check-roles \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@example.com","password":"yourpassword"}'
 ```
+Expected: `{"roles":[{"role":"user",...},{"role":"trainer",...},{"role":"admin",...}]}`
 
----
+### Test 2: Switch to Admin Role
+1. Login as admin user
+2. Open RoleSwitcher dropdown
+3. Click "Admin"
+4. Expected: Redirect to `/en/admin` (or `/ru/admin`)
+5. Page should load admin dashboard
 
-## Testing
+### Test 3: Direct Access
+1. Login as admin, switch to admin role
+2. Navigate directly to `/admin`
+3. Expected: Redirect to `/en/admin` (by next-intl), then admin panel loads
 
-### Test 1: Admin with trainerProfile switches to Trainer
-```
-1. Login as admin with trainerProfile
-2. See "Switch Role" dropdown
-3. Click "Trainer Dashboard"
-4. Should navigate to /trainer-dashboard
-5. Middleware should allow access (new role in JWT)
-```
-
-### Test 2: Admin WITHOUT trainerProfile switches to Trainer
-```
-1. Login as admin without trainerProfile
-2. See "Switch Role" dropdown with Trainer option
-3. Click "Trainer Dashboard"
-4. Should navigate to /trainer-dashboard
-5. Can create trainer profile from there
-```
-
-### Test 3: Trainer switches to User
-```
-1. Login as trainer
-2. Click "Switch Role" → "User Dashboard"
-3. Should navigate to /dashboard
-```
-
-### Test 4: Single-role user
-```
+### Test 4: Non-Admin Access
 1. Login as regular user
-2. No "Switch Role" button shown
-3. Direct redirect to /dashboard
-```
+2. Try to access `/en/admin`
+3. Expected: Redirect to `/en` (homepage with locale)
 
----
+### Test 5: Switch Back
+1. In admin panel, switch to "User" role
+2. Expected: Redirect to `/en/dashboard` or `/en`
 
-## Notes
+## Environment Variables
+No new env vars required.
 
-- `unstable_update` is NextAuth v5 beta API — may change in stable release
-- JWT update is synchronous — middleware sees new role immediately
-- `originalRole` in session prevents privilege escalation (cannot become admin if not one)
+## Database Changes
+No migration required.
+
+## Post-Deploy Verification
+1. Check Vercel logs for middleware execution
+2. Verify cookie `authjs.session-token` contains `role: "admin"` after switch
+3. Test in incognito window with fresh session

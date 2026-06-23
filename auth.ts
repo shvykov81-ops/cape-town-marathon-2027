@@ -44,7 +44,6 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
           if (requestedRole === "admin" && user.role === "admin") {
             effectiveRole = "admin";
           } else if (requestedRole === "trainer" && (user.role === "trainer" || user.role === "admin")) {
-            // Admin can ALWAYS be trainer (even without profile)
             effectiveRole = "trainer";
           } else if (requestedRole === "user") {
             effectiveRole = "user";
@@ -68,9 +67,10 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
         token.role = user.role;
         token.originalRole = (user as any).originalRole;
       }
-      // Handle role switch during session
+      // Handle role switch during session — PRESERVE originalRole
       if (trigger === "update" && session?.activeRole) {
         token.role = session.activeRole;
+        // originalRole stays unchanged — user can always switch back
       }
       return token;
     },

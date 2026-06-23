@@ -26,21 +26,37 @@ async function getRoleFromToken(request: NextRequest): Promise<string | null> {
   }
 }
 
+function getLocaleFromPathname(pathname: string): string {
+  if (pathname.startsWith("/ru")) return "ru";
+  if (pathname.startsWith("/en")) return "en";
+  return "en";
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // ─── 1. Run next-intl middleware FIRST (adds locale prefix) ───
+  // This handles /admin → /en/admin or /ru/admin BEFORE role checks
+  const intlResponse = intlMiddleware(request);
+
+  // If next-intl did a redirect (307/308), return it immediately
+  if (intlResponse.status === 307 || intlResponse.status === 308) {
+    return intlResponse;
+  }
+
+  // ─── 2. Check protected routes AFTER locale is resolved ───
   const isAdminRoute =
-    pathname.startsWith("/admin") ||
+    pathname.includes("/admin") ||
     pathname.startsWith("/en/admin") ||
     pathname.startsWith("/ru/admin");
 
   const isTrainerRoute =
-    pathname.startsWith("/trainer-dashboard") ||
+    pathname.includes("/trainer-dashboard") ||
     pathname.startsWith("/en/trainer-dashboard") ||
     pathname.startsWith("/ru/trainer-dashboard");
 
   const isDashboardRoute =
-    pathname.startsWith("/dashboard") ||
+    pathname.includes("/dashboard") ||
     pathname.startsWith("/en/dashboard") ||
     pathname.startsWith("/ru/dashboard");
 
@@ -50,27 +66,25 @@ export async function middleware(request: NextRequest) {
       request.cookies.has("authjs.session-token") ||
       request.cookies.has("next-auth.session-token");
 
+    const locale = getLocaleFromPathname(pathname);
+
     if (!hasSession) {
-      return NextResponse.redirect(new URL("/account", request.url));
+      // Redirect to login with locale
+      return NextResponse.redirect(new URL(`/${locale}/account`, request.url));
     }
 
     const role = await getRoleFromToken(request);
 
     if (isAdminRoute && role !== "admin") {
-      return NextResponse.redirect(new URL("/", request.url));
+      // Redirect to homepage with locale (not raw "/")
+      return NextResponse.redirect(new URL(`/${locale}`, request.url));
     }
 
     if (isTrainerRoute && role !== "trainer" && role !== "admin") {
-      return NextResponse.redirect(new URL("/", request.url));
+      return NextResponse.redirect(new URL(`/${locale}`, request.url));
     }
 
     return NextResponse.next();
-  }
-
-  const intlResponse = intlMiddleware(request);
-
-  if (intlResponse.status === 307 || intlResponse.status === 308) {
-    return intlResponse;
   }
 
   return intlResponse;

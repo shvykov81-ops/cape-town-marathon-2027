@@ -1,5 +1,4 @@
 import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/sidebar";
 
 export default async function AdminLayout({
@@ -8,8 +7,29 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
+
+  // Server Component check: show Access Denied instead of redirect
+  // Actual redirect happens in middleware (which reads fresh cookie)
   if (!session || session.user.role !== "admin") {
-    redirect("/");
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a] text-white">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold">Access Denied</h1>
+          <p className="text-neutral-400">
+            You need admin privileges to access this page.
+          </p>
+          <p className="text-sm text-neutral-500">
+            Current role: {session?.user?.role || "none"}
+          </p>
+          <a
+            href="/"
+            className="inline-block mt-4 px-4 py-2 bg-teal-600 rounded-lg hover:bg-teal-500 transition"
+          >
+            Go to Homepage
+          </a>
+        </div>
+      </div>
+    );
   }
 
   return (
