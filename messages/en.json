@@ -1109,6 +1109,31 @@
       "showing": "Showing",
       "of": "of",
       "results": "results"
+    },
+    "list": {
+      "allTab": "All",
+      "pendingTab": "Pending",
+      "publishedTab": "Published",
+      "suspendedTab": "Suspended",
+      "searchPlaceholder": "Search trainers...",
+      "colTrainer": "Trainer",
+      "colStatus": "Status",
+      "colRating": "Rating",
+      "colSpecialties": "Specialties",
+      "colStats": "Stats",
+      "colActions": "Actions",
+      "noTrainers": "No trainers found"
+    },
+    "actions": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "suspend": "Suspend",
+      "activate": "Activate",
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel"
     }
   },
   "trainerDashboard": {
@@ -1212,5 +1237,11 @@
       "saved": "Settings saved successfully",
       "saveError": "Failed to save settings"
     }
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Please try again.",
+    "retry": "Retry",
+    "home": "Go Home"
   }
 }
