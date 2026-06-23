@@ -1122,7 +1122,9 @@
       "colSpecialties": "Specialties",
       "colStats": "Stats",
       "colActions": "Actions",
-      "noTrainers": "No trainers found"
+      "noTrainers": "No trainers found",
+      "rejectedTab": "Rejected",
+      "draftTab": "Draft"
     },
     "actions": {
       "approve": "Approve",

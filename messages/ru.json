@@ -1122,7 +1122,9 @@
       "colSpecialties": "Специализации",
       "colStats": "Статистика",
       "colActions": "Действия",
-      "noTrainers": "Тренеры не найдены"
+      "noTrainers": "Тренеры не найдены",
+      "rejectedTab": "Отклонено",
+      "draftTab": "Черновик"
     },
     "actions": {
       "approve": "Одобрить",
