@@ -10,98 +10,53 @@ const SECRET = new TextEncoder().encode(
 
 const intlMiddleware = createMiddleware(routing);
 
-async function getRoleFromToken(request: NextRequest): Promise<string | null> {
-  // Try ALL possible cookie names
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Log EVERYTHING
+  console.log("=== MIDDLEWARE START ===");
+  console.log("Path:", pathname);
+  console.log("Cookie names:", request.cookies.getAll().map(c => c.name));
+
+  // Try to read token
   const tokenCookie =
     request.cookies.get("__Secure-authjs.session-token")?.value ||
     request.cookies.get("authjs.session-token")?.value ||
     request.cookies.get("next-auth.session-token")?.value ||
     request.cookies.get("__Secure-next-auth.session-token")?.value;
 
-  if (!tokenCookie) {
-    console.log("[Middleware] No session token found");
-    return null;
-  }
+  console.log("Has token:", !!tokenCookie);
 
-  try {
-    const { payload } = await jwtVerify(tokenCookie, SECRET, { clockTolerance: 60 });
-    console.log("[Middleware] JWT verified, role:", payload.role);
-    return (payload.role as string) || null;
-  } catch (error) {
-    console.error("[Middleware] JWT verify failed:", (error as Error).message);
-    return null;
-  }
-}
-
-function getLocaleFromPathname(pathname: string): string {
-  if (pathname.startsWith("/ru")) return "ru";
-  if (pathname.startsWith("/en")) return "en";
-  return "en";
-}
-
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // DEBUG: Log all cookies
-  console.log("[Middleware] Path:", pathname);
-  console.log("[Middleware] Cookies:", Array.from(request.cookies.getAll()).map(c => c.name));
-
-  // ─── 1. Run next-intl middleware FIRST ───
-  const intlResponse = intlMiddleware(request);
-
-  if (intlResponse.status === 307 || intlResponse.status === 308) {
-    return intlResponse;
-  }
-
-  // ─── 2. Check protected routes ───
-  const isAdminRoute =
-    pathname.includes("/admin") ||
-    pathname.startsWith("/en/admin") ||
-    pathname.startsWith("/ru/admin");
-
-  const isTrainerRoute =
-    pathname.includes("/trainer-dashboard") ||
-    pathname.startsWith("/en/trainer-dashboard") ||
-    pathname.startsWith("/ru/trainer-dashboard");
-
-  const isDashboardRoute =
-    pathname.includes("/dashboard") ||
-    pathname.startsWith("/en/dashboard") ||
-    pathname.startsWith("/ru/dashboard");
-
-  if (isAdminRoute || isTrainerRoute || isDashboardRoute) {
-    const hasSession =
-      request.cookies.has("__Secure-authjs.session-token") ||
-      request.cookies.has("authjs.session-token") ||
-      request.cookies.has("next-auth.session-token") ||
-      request.cookies.has("__Secure-next-auth.session-token");
-
-    const locale = getLocaleFromPathname(pathname);
-    console.log("[Middleware] Has session:", hasSession, "Locale:", locale);
-
-    if (!hasSession) {
-      console.log("[Middleware] No session, redirecting to login");
-      return NextResponse.redirect(new URL(`/${locale}/account`, request.url));
+  let role = null;
+  if (tokenCookie) {
+    try {
+      const { payload } = await jwtVerify(tokenCookie, SECRET, { clockTolerance: 60 });
+      role = payload.role;
+      console.log("Token role:", role);
+      console.log("Token originalRole:", payload.originalRole);
+      console.log("Token sub:", payload.sub);
+    } catch (e) {
+      console.log("Token verify error:", (e as Error).message);
     }
-
-    const role = await getRoleFromToken(request);
-    console.log("[Middleware] Role:", role, "Required:", isAdminRoute ? "admin" : isTrainerRoute ? "trainer" : "user");
-
-    if (isAdminRoute && role !== "admin") {
-      console.log("[Middleware] Admin access denied, role:", role);
-      return NextResponse.redirect(new URL(`/${locale}`, request.url));
-    }
-
-    if (isTrainerRoute && role !== "trainer" && role !== "admin") {
-      console.log("[Middleware] Trainer access denied, role:", role);
-      return NextResponse.redirect(new URL(`/${locale}`, request.url));
-    }
-
-    console.log("[Middleware] Access granted");
-    return NextResponse.next();
   }
 
-  return intlResponse;
+  // Check if admin route
+  const isAdminRoute = pathname.includes("/admin");
+  console.log("Is admin route:", isAdminRoute);
+
+  if (isAdminRoute) {
+    console.log("Admin route check — role:", role, "required: admin");
+    if (role !== "admin") {
+      console.log("ACCESS DENIED — redirecting to /ru");
+      return NextResponse.redirect(new URL("/ru", request.url));
+    }
+    console.log("ACCESS GRANTED");
+  }
+
+  console.log("=== MIDDLEWARE END ===");
+
+  // Run intl middleware
+  return intlMiddleware(request);
 }
 
 export const config = {
