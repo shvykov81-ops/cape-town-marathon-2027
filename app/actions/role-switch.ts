@@ -10,23 +10,34 @@ const SECRET = new TextEncoder().encode(
 
 /**
  * Server Action: Update JWT role directly
- * This bypasses the unstable_update issue by rewriting the cookie server-side
+ * Sets ALL possible cookie names to ensure compatibility
  */
 export async function updateRoleAction(role: string) {
   try {
     // 1. Get current session token from cookie
     const cookieStore = await cookies();
-    const tokenCookie = 
+
+    // Try ALL possible cookie names (NextAuth v5 uses different names)
+    const tokenCookie =
       cookieStore.get("__Secure-authjs.session-token")?.value ||
       cookieStore.get("authjs.session-token")?.value ||
-      cookieStore.get("next-auth.session-token")?.value;
+      cookieStore.get("next-auth.session-token")?.value ||
+      cookieStore.get("__Secure-next-auth.session-token")?.value;
 
     if (!tokenCookie) {
+      console.error("[updateRoleAction] No session token found in cookies");
       return { success: false, error: "No session found" };
     }
 
     // 2. Verify and decode current token
-    const { payload } = await jwtVerify(tokenCookie, SECRET, { clockTolerance: 60 });
+    let payload;
+    try {
+      const verified = await jwtVerify(tokenCookie, SECRET, { clockTolerance: 60 });
+      payload = verified.payload;
+    } catch (verifyError) {
+      console.error("[updateRoleAction] JWT verify failed:", verifyError.message);
+      return { success: false, error: "Invalid session token" };
+    }
 
     // 3. Validate role switch permissions from DB
     const user = await prisma.user.findUnique({
@@ -51,39 +62,48 @@ export async function updateRoleAction(role: string) {
     }
 
     // 4. Create new JWT with updated role
+    const now = Math.floor(Date.now() / 1000);
     const newToken = await new SignJWT({
       ...payload,
       role: role,
       originalRole: user.role,
-      iat: Math.floor(Date.now() / 1000),
+      iat: now,
+      exp: now + 30 * 24 * 60 * 60, // 30 days
     })
       .setProtectedHeader({ alg: "HS256" })
+      .setIssuedAt(now)
       .setExpirationTime("30d")
       .sign(SECRET);
 
-    // 5. Set new cookie
-    const isSecure = process.env.NODE_ENV === "production";
-    const cookieName = isSecure ? "__Secure-authjs.session-token" : "authjs.session-token";
-
-    cookieStore.set(cookieName, newToken, {
+    // 5. Set ALL possible cookie names (ensure compatibility)
+    // NextAuth v5 beta may use different names on Vercel
+    const cookieOptions = {
       httpOnly: true,
-      secure: isSecure,
-      sameSite: "lax",
+      secure: true, // Always secure in production
+      sameSite: "lax" as const,
       path: "/",
       maxAge: 30 * 24 * 60 * 60, // 30 days
-    });
+    };
+
+    // Set ALL possible cookie names
+    cookieStore.set("authjs.session-token", newToken, cookieOptions);
+    cookieStore.set("__Secure-authjs.session-token", newToken, cookieOptions);
+    cookieStore.set("next-auth.session-token", newToken, cookieOptions);
+    cookieStore.set("__Secure-next-auth.session-token", newToken, cookieOptions);
+
+    console.log(`[updateRoleAction] Role switched to ${role} for user ${user.email}`);
 
     // 6. Determine redirect URL
-    const redirectUrl = 
+    const redirectUrl =
       role === "admin" ? "/admin" :
       role === "trainer" ? "/trainer-dashboard" :
       "/dashboard";
 
-    return { 
-      success: true, 
-      role, 
+    return {
+      success: true,
+      role,
       redirectUrl,
-      message: `Switched to ${role}` 
+      message: `Switched to ${role}`
     };
 
   } catch (error) {

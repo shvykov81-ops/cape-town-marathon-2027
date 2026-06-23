@@ -11,17 +11,24 @@ const SECRET = new TextEncoder().encode(
 const intlMiddleware = createMiddleware(routing);
 
 async function getRoleFromToken(request: NextRequest): Promise<string | null> {
+  // Try ALL possible cookie names
   const tokenCookie =
     request.cookies.get("__Secure-authjs.session-token")?.value ||
     request.cookies.get("authjs.session-token")?.value ||
-    request.cookies.get("next-auth.session-token")?.value;
+    request.cookies.get("next-auth.session-token")?.value ||
+    request.cookies.get("__Secure-next-auth.session-token")?.value;
 
-  if (!tokenCookie) return null;
+  if (!tokenCookie) {
+    console.log("[Middleware] No session token found");
+    return null;
+  }
 
   try {
     const { payload } = await jwtVerify(tokenCookie, SECRET, { clockTolerance: 60 });
+    console.log("[Middleware] JWT verified, role:", payload.role);
     return (payload.role as string) || null;
-  } catch {
+  } catch (error) {
+    console.error("[Middleware] JWT verify failed:", (error as Error).message);
     return null;
   }
 }
@@ -35,16 +42,18 @@ function getLocaleFromPathname(pathname: string): string {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // ─── 1. Run next-intl middleware FIRST (adds locale prefix) ───
-  // This handles /admin → /en/admin or /ru/admin BEFORE role checks
+  // DEBUG: Log all cookies
+  console.log("[Middleware] Path:", pathname);
+  console.log("[Middleware] Cookies:", Array.from(request.cookies.getAll()).map(c => c.name));
+
+  // ─── 1. Run next-intl middleware FIRST ───
   const intlResponse = intlMiddleware(request);
 
-  // If next-intl did a redirect (307/308), return it immediately
   if (intlResponse.status === 307 || intlResponse.status === 308) {
     return intlResponse;
   }
 
-  // ─── 2. Check protected routes AFTER locale is resolved ───
+  // ─── 2. Check protected routes ───
   const isAdminRoute =
     pathname.includes("/admin") ||
     pathname.startsWith("/en/admin") ||
@@ -64,26 +73,31 @@ export async function middleware(request: NextRequest) {
     const hasSession =
       request.cookies.has("__Secure-authjs.session-token") ||
       request.cookies.has("authjs.session-token") ||
-      request.cookies.has("next-auth.session-token");
+      request.cookies.has("next-auth.session-token") ||
+      request.cookies.has("__Secure-next-auth.session-token");
 
     const locale = getLocaleFromPathname(pathname);
+    console.log("[Middleware] Has session:", hasSession, "Locale:", locale);
 
     if (!hasSession) {
-      // Redirect to login with locale
+      console.log("[Middleware] No session, redirecting to login");
       return NextResponse.redirect(new URL(`/${locale}/account`, request.url));
     }
 
     const role = await getRoleFromToken(request);
+    console.log("[Middleware] Role:", role, "Required:", isAdminRoute ? "admin" : isTrainerRoute ? "trainer" : "user");
 
     if (isAdminRoute && role !== "admin") {
-      // Redirect to homepage with locale (not raw "/")
+      console.log("[Middleware] Admin access denied, role:", role);
       return NextResponse.redirect(new URL(`/${locale}`, request.url));
     }
 
     if (isTrainerRoute && role !== "trainer" && role !== "admin") {
+      console.log("[Middleware] Trainer access denied, role:", role);
       return NextResponse.redirect(new URL(`/${locale}`, request.url));
     }
 
+    console.log("[Middleware] Access granted");
     return NextResponse.next();
   }
 
