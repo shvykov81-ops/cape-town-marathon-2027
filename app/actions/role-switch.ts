@@ -35,7 +35,7 @@ export async function updateRoleAction(role: string) {
       const verified = await jwtVerify(tokenCookie, SECRET, { clockTolerance: 60 });
       payload = verified.payload;
     } catch (verifyError) {
-      console.error("[updateRoleAction] JWT verify failed:", verifyError.message);
+      console.error("[updateRoleAction] JWT verify failed:", (verifyError as Error).message);
       return { success: false, error: "Invalid session token" };
     }
 
@@ -107,7 +107,7 @@ export async function updateRoleAction(role: string) {
     };
 
   } catch (error) {
-    console.error("[updateRoleAction] Error:", error);
+    console.error("[updateRoleAction] Error:", (error as Error).message);
     return { success: false, error: "Server error" };
   }
 }
