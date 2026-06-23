@@ -1028,6 +1028,91 @@
       }
     ]
   },
+  "adminModeration": {
+    "title": "Модерация тренеров",
+    "subtitle": "Управление заявками и профилями тренеров",
+    "tabs": {
+      "applications": "Заявки",
+      "trainers": "Тренеры",
+      "revisions": "Редакции"
+    },
+    "status": {
+      "all": "Все",
+      "pending": "На рассмотрении",
+      "approved": "Одобрено",
+      "rejected": "Отклонено",
+      "draft": "Черновик",
+      "published": "Опубликовано",
+      "suspended": "Приостановлено"
+    },
+    "applicationCard": {
+      "title": "Заявка тренера",
+      "submitted": "Подана",
+      "experience": "Опыт",
+      "specialization": "Специализация",
+      "reviewApplication": "Рассмотреть заявку",
+      "approve": "Одобрить",
+      "reject": "Отклонить",
+      "viewDetails": "Подробности"
+    },
+    "trainerCard": {
+      "profileStatus": "Статус профиля",
+      "viewProfile": "Просмотр профиля",
+      "editProfile": "Редактировать",
+      "suspend": "Приостановить",
+      "activate": "Активировать",
+      "delete": "Удалить",
+      "confirmDelete": "Вы уверены, что хотите удалить этого тренера?",
+      "profileViews": "Просмотров",
+      "bookings": "Бронирований",
+      "reviews": "Отзывов"
+    },
+    "revisionCard": {
+      "title": "Редакция профиля",
+      "submittedBy": "Подана",
+      "submittedAt": "Дата подачи",
+      "reviewRevision": "Рассмотреть редакцию",
+      "approveAndMerge": "Одобрить и применить",
+      "reject": "Отклонить",
+      "changes": "Изменения",
+      "currentValue": "Текущее",
+      "proposedValue": "Предлагаемое"
+    },
+    "filters": {
+      "search": "Поиск",
+      "searchPlaceholder": "Поиск по имени или email...",
+      "status": "Статус",
+      "sortBy": "Сортировка",
+      "sortNewest": "Сначала новые",
+      "sortOldest": "Сначала старые",
+      "sortName": "По имени"
+    },
+    "empty": {
+      "noApplications": "Нет заявок на рассмотрении",
+      "noTrainers": "Тренеры не найдены",
+      "noRevisions": "Нет редакций на рассмотрении",
+      "noResults": "Ничего не найдено"
+    },
+    "toast": {
+      "approved": "Заявка одобрена",
+      "rejected": "Заявка отклонена",
+      "suspended": "Профиль приостановлен",
+      "activated": "Профиль активирован",
+      "deleted": "Тренер удалён",
+      "revisionApproved": "Редакция одобрена",
+      "revisionRejected": "Редакция отклонена",
+      "error": "Произошла ошибка"
+    },
+    "pagination": {
+      "previous": "Назад",
+      "next": "Вперёд",
+      "showing": "Показано",
+      "of": "из",
+      "results": "результатов"
+    }
+  }
+}
+  },
   "trainerDashboard": {
     "metadata": {
       "title": "Кабинет тренера — RUN & Travel",
