@@ -1,121 +1,75 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { requireTrainer } from "@/lib/auth/trainer-guard";
-import { TrainerProfileStatus, RevisionStatus } from "@prisma/client";
-import { trainerSelfServiceUpdateSchema } from "@/lib/validations/trainer";
-import { sanitizeHtml } from "@/lib/sanitize";
+import { z } from "zod";
+import { revalidateTag } from "next/cache";
+import sanitizeHtml from "sanitize-html";
+
+const trainerSelfServiceUpdateSchema = z.object({
+  displayName: z.string().min(1).max(100).optional(),
+  headline: z.string().max(200).optional(),
+  bio: z.string().max(5000).optional(),
+  specialties: z.array(z.string().max(50)).max(20).optional(),
+  languages: z.array(z.string().max(20)).max(10).optional(),
+  credentials: z.array(z.string().max(200)).max(10).optional(),
+  hourlyRate: z.number().min(0).max(10000).optional(),
+  currency: z.string().max(3).optional(),
+  isAvailable: z.boolean().optional(),
+  photos: z.array(z.string().url().max(500)).max(20).optional(),
+  instagram: z.string().max(100).optional(),
+  strava: z.string().max(100).optional(),
+  website: z.string().max(200).optional(),
+});
 
 export async function GET() {
-  const { error, trainer } = await requireTrainer();
-  if (error) return error;
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const trainer = await prisma.trainer.findFirst({
+    where: { userId: session.user.id },
+    include: {
+      availability: true,
+      _count: { select: { reviews: true } },
+    },
+  });
+
   if (!trainer) {
     return NextResponse.json({ error: "Trainer profile not found" }, { status: 404 });
   }
+
   return NextResponse.json(trainer);
 }
 
-export async function PATCH(request: NextRequest) {
-  const { error, trainer, user } = await requireTrainer();
-  if (error) return error;
+export async function PATCH(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const trainer = await prisma.trainer.findFirst({
+    where: { userId: session.user.id },
+  });
+
   if (!trainer) {
     return NextResponse.json({ error: "Trainer profile not found" }, { status: 404 });
   }
 
-  const body = await request.json();
-
-  // ─── PUBLISHED profiles: create revision instead of direct edit ───
-  if (trainer.status === TrainerProfileStatus.PUBLISHED) {
-    // Validate with Zod first
-    const parsed = trainerSelfServiceUpdateSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    const updateData = parsed.data;
-
-    // Sanitize bioHtml
-    if (updateData.bioHtml) {
-      updateData.bioHtml = sanitizeHtml(updateData.bioHtml);
-    }
-
-    // Remove undefined values
-    const cleanData = Object.fromEntries(
-      Object.entries(updateData).filter(([, v]) => v !== undefined)
-    );
-
-    if (Object.keys(cleanData).length === 0) {
-      return NextResponse.json({ error: "No changes provided" }, { status: 400 });
-    }
-
-    // Check for existing pending revision
-    const existingPending = await prisma.trainerRevision.findFirst({
-      where: {
-        trainerId: trainer.id,
-        status: { in: [RevisionStatus.DRAFT, RevisionStatus.PENDING] },
-      },
-    });
-
-    if (existingPending) {
-      return NextResponse.json(
-        {
-          error: "You already have a pending revision. Please wait for it to be reviewed or submit the existing one.",
-          revisionId: existingPending.id,
-          status: existingPending.status,
-        },
-        { status: 409 }
-      );
-    }
-
-    // Create revision
-    const revision = await prisma.trainerRevision.create({
-      data: {
-        trainerId: trainer.id,
-        data: cleanData as any,
-        status: RevisionStatus.DRAFT,
-      },
-    });
-
-    // Log in audit trail
-    await prisma.trainerProfileChange.create({
-      data: {
-        trainerId: trainer.id,
-        changedBy: user!.id,
-        changeType: "UPDATE",
-        fieldName: "revision_created_via_patch",
-        oldValue: null,
-        newValue: revision.id,
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: "Your profile is published. Changes have been saved as a revision for admin review.",
-      revision: {
-        id: revision.id,
-        status: revision.status,
-        createdAt: revision.createdAt,
-      },
-    }, { status: 202 });
-  }
-
-  // ─── DRAFT / REJECTED profiles: direct edit (existing behavior) ───
-  if (trainer.status === TrainerProfileStatus.PENDING) {
+  if (trainer.status === "SUSPENDED") {
     return NextResponse.json(
-      { error: "Editing is disabled while profile is under review" },
-      { status: 403 }
-    );
-  }
-  if (trainer.status === TrainerProfileStatus.SUSPENDED) {
-    return NextResponse.json(
-      { error: "Suspended profiles cannot be edited. Contact admin." },
+      { error: "Your account is suspended. Contact support." },
       { status: 403 }
     );
   }
 
-  // Validate with Zod
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
   const parsed = trainerSelfServiceUpdateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -124,56 +78,83 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  const updateData = parsed.data;
+  const data = parsed.data;
+
+  const sanitized: Record<string, any> = {};
   const allowedFields = [
-    "displayName", "headline", "bio", "bioHtml", "credentials",
-    "photoUrl", "photos", "videoUrl", "videoThumbnail", "stravaUrl", "websiteUrl",
-    "instagramUrl", "tripsterUrl", "experienceYears", "maxClientsPerMonth",
-    "specialties", "languages",
+    "displayName", "headline", "bio", "specialties", "languages",
+    "credentials", "hourlyRate", "currency", "isAvailable", "photos",
+    "instagram", "strava", "website",
   ];
 
-  const filteredData: Record<string, unknown> = {};
   for (const key of allowedFields) {
-    if (updateData[key as keyof typeof updateData] !== undefined) {
-      filteredData[key] = updateData[key as keyof typeof updateData];
+    if (data[key as keyof typeof data] !== undefined) {
+      if (key === "bio") {
+        sanitized[key] = sanitizeHtml(data.bio || "", {
+          allowedTags: ["b", "i", "em", "strong", "a", "p", "br", "ul", "ol", "li"],
+          allowedAttributes: { a: ["href", "target"] },
+        });
+      } else {
+        sanitized[key] = data[key as keyof typeof data];
+      }
     }
   }
 
-  // Sanitize bioHtml
-  if (filteredData.bioHtml) {
-    filteredData.bioHtml = sanitizeHtml(filteredData.bioHtml as string);
-  }
+  // ─── DRAFT: direct update ───
+  if (trainer.status === "DRAFT") {
+    const updated = await prisma.trainer.update({
+      where: { id: trainer.id },
+      data: sanitized,
+    });
 
-  const changes: { fieldName: string; oldValue: string | null; newValue: string | null }[] = [];
-  for (const key of allowedFields) {
-    const oldVal = (trainer as Record<string, unknown>)[key];
-    const newVal = filteredData[key];
-    if (newVal !== undefined && JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
-      changes.push({
-        fieldName: key,
-        oldValue: oldVal !== null ? String(oldVal) : null,
-        newValue: newVal !== null ? String(newVal) : null,
-      });
-    }
-  }
-
-  const updated = await prisma.trainer.update({
-    where: { id: trainer.id },
-    data: filteredData,
-  });
-
-  if (changes.length > 0) {
-    await prisma.trainerProfileChange.createMany({
-      data: changes.map((c) => ({
+    await prisma.trainerProfileChange.create({
+      data: {
         trainerId: trainer.id,
-        changedBy: user!.id,
-        changeType: "UPDATE" as const,
-        fieldName: c.fieldName,
-        oldValue: c.oldValue,
-        newValue: c.newValue,
-      })),
+        type: "UPDATE",
+        changedBy: session.user.id,
+        changes: JSON.stringify(sanitized),
+      },
+    });
+
+    revalidateTag("trainers");
+    return NextResponse.json(updated);
+  }
+
+  // ─── PUBLISHED: create revision ───
+  if (trainer.status === "PUBLISHED") {
+    const existingRevision = await prisma.trainerRevision.findFirst({
+      where: { trainerId: trainer.id, status: { in: ["DRAFT", "PENDING"] } },
+    });
+
+    if (existingRevision) {
+      return NextResponse.json(
+        { error: "You have a pending revision. Wait for admin approval." },
+        { status: 409 }
+      );
+    }
+
+    const revision = await prisma.trainerRevision.create({
+      data: {
+        trainerId: trainer.id,
+        data: sanitized,
+        status: "DRAFT",
+      },
+    });
+
+    await prisma.trainerProfileChange.create({
+      data: {
+        trainerId: trainer.id,
+        type: "UPDATE",
+        changedBy: session.user.id,
+        changes: JSON.stringify({ revisionId: revision.id, data: sanitized }),
+      },
+    });
+
+    return NextResponse.json({
+      message: "Revision created. Submit for admin approval.",
+      revision,
     });
   }
 
-  return NextResponse.json(updated);
+  return NextResponse.json({ error: "Invalid trainer status" }, { status: 400 });
 }

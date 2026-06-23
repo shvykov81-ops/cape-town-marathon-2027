@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Search, Eye, CheckCircle, XCircle, AlertTriangle, Loader2,
-  Filter, ArrowRight, Star, Users, Clock
+  Filter, ArrowRight, Star, Users, Clock, Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "./status-badge";
@@ -60,7 +60,6 @@ export function TrainerModerationList() {
         return r.json();
       })
       .then((data) => {
-        // FIX: API returns { trainers: [...], pagination: {...} }
         const trainerList = Array.isArray(data?.trainers) ? data.trainers : [];
         setTrainers(trainerList);
         setLoading(false);
@@ -75,13 +74,18 @@ export function TrainerModerationList() {
     fetchTrainers();
   }, [fetchTrainers]);
 
-  const handleModerate = async (id: string, action: "APPROVE" | "REJECT" | "SUSPEND") => {
+  const handleModerate = async (id: string, action: "APPROVE" | "SUSPEND" | "DELETE") => {
+    if (action === "DELETE" && !confirm(t("list.confirmDelete"))) return;
+
     setModerating(id);
     try {
       const res = await fetch(`/api/admin/trainers/${id}/moderate`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, reason: action === "APPROVE" ? "" : "Admin action" }),
+        body: JSON.stringify({
+          action,
+          reason: action === "APPROVE" ? "" : "Admin action",
+        }),
       });
       if (res.ok) fetchTrainers();
     } finally {
@@ -106,11 +110,9 @@ export function TrainerModerationList() {
 
   const tabs: { key: StatusFilter; label: string; icon: React.ElementType; count: number }[] = [
     { key: "ALL", label: t("list.allTab"), icon: Users, count: statusCounts.ALL },
-    { key: "PENDING", label: t("list.pendingTab"), icon: Clock, count: statusCounts.PENDING },
-    { key: "PUBLISHED", label: t("list.publishedTab"), icon: CheckCircle, count: statusCounts.PUBLISHED },
-    { key: "REJECTED", label: t("list.rejectedTab"), icon: XCircle, count: statusCounts.REJECTED },
-    { key: "SUSPENDED", label: t("list.suspendedTab"), icon: AlertTriangle, count: statusCounts.SUSPENDED },
     { key: "DRAFT", label: t("list.draftTab"), icon: Filter, count: statusCounts.DRAFT },
+    { key: "PUBLISHED", label: t("list.publishedTab"), icon: CheckCircle, count: statusCounts.PUBLISHED },
+    { key: "SUSPENDED", label: t("list.suspendedTab"), icon: AlertTriangle, count: statusCounts.SUSPENDED },
   ];
 
   if (loading) {
@@ -248,43 +250,50 @@ export function TrainerModerationList() {
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      {trainer.status === "PENDING" && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleModerate(trainer.id, "APPROVE")}
-                            disabled={moderating === trainer.id}
-                            className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
-                          >
-                            {moderating === trainer.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <CheckCircle className="w-4 h-4" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleModerate(trainer.id, "REJECT")}
-                            disabled={moderating === trainer.id}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                          >
-                            <XCircle className="w-4 h-4" />
-                          </Button>
-                        </>
+
+                      {/* Publish button for DRAFT trainers */}
+                      {trainer.status === "DRAFT" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleModerate(trainer.id, "APPROVE")}
+                          disabled={moderating === trainer.id}
+                          className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                          title="Publish profile"
+                        >
+                          {moderating === trainer.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <CheckCircle className="w-4 h-4" />
+                          )}
+                        </Button>
                       )}
-                      {trainer.status === "PUBLISHED" && (
+
+                      {/* Suspend button for active trainers */}
+                      {(trainer.status === "PUBLISHED" || trainer.status === "DRAFT") && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleModerate(trainer.id, "SUSPEND")}
                           disabled={moderating === trainer.id}
                           className="text-orange-400 hover:text-orange-300 hover:bg-orange-500/10"
+                          title="Suspend account"
                         >
                           <AlertTriangle className="w-4 h-4" />
                         </Button>
                       )}
+
+                      {/* Delete button for all */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleModerate(trainer.id, "DELETE")}
+                        disabled={moderating === trainer.id}
+                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                        title="Delete profile"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </motion.tr>
