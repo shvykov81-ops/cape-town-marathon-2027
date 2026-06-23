@@ -48,6 +48,11 @@ export async function PATCH(
     return NextResponse.json({ error: "Trainer not found" }, { status: 404 });
   }
 
+  // Guard: trainer must have a userId to update role
+  if (!trainer.userId) {
+    return NextResponse.json({ error: "Trainer has no associated user" }, { status: 400 });
+  }
+
   let newStatus: string;
   let notificationMessage: string;
 
