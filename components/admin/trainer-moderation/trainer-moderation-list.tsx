@@ -55,9 +55,20 @@ export function TrainerModerationList() {
       ? "/api/admin/trainers"
       : `/api/admin/trainers?status=${statusFilter}`;
     fetch(url)
-      .then((r) => r.json())
-      .then((data) => { setTrainers(data); setLoading(false); })
-      .catch(() => setLoading(false));
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((data) => {
+        // FIX: API returns { trainers: [...], pagination: {...} }
+        const trainerList = Array.isArray(data?.trainers) ? data.trainers : [];
+        setTrainers(trainerList);
+        setLoading(false);
+      })
+      .catch(() => {
+        setTrainers([]);
+        setLoading(false);
+      });
   }, [statusFilter]);
 
   useEffect(() => {
@@ -228,24 +239,36 @@ export function TrainerModerationList() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => router.push(`/admin/trainers/${trainer.id}`)}
+                        className="text-neutral-400 hover:text-white hover:bg-white/[0.05]"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
                       {trainer.status === "PENDING" && (
                         <>
                           <Button
-                            size="sm"
                             variant="ghost"
+                            size="sm"
                             onClick={() => handleModerate(trainer.id, "APPROVE")}
                             disabled={moderating === trainer.id}
-                            className="h-8 w-8 p-0 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                            className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
                           >
-                            {moderating === trainer.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                            {moderating === trainer.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <CheckCircle className="w-4 h-4" />
+                            )}
                           </Button>
                           <Button
-                            size="sm"
                             variant="ghost"
+                            size="sm"
                             onClick={() => handleModerate(trainer.id, "REJECT")}
                             disabled={moderating === trainer.id}
-                            className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                           >
                             <XCircle className="w-4 h-4" />
                           </Button>
@@ -253,36 +276,29 @@ export function TrainerModerationList() {
                       )}
                       {trainer.status === "PUBLISHED" && (
                         <Button
-                          size="sm"
                           variant="ghost"
+                          size="sm"
                           onClick={() => handleModerate(trainer.id, "SUSPEND")}
                           disabled={moderating === trainer.id}
-                          className="h-8 w-8 p-0 text-orange-400 hover:text-orange-300 hover:bg-orange-500/10"
+                          className="text-orange-400 hover:text-orange-300 hover:bg-orange-500/10"
                         >
                           <AlertTriangle className="w-4 h-4" />
                         </Button>
                       )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => router.push(`/admin/trainers/${trainer.id}`)}
-                        className="h-8 w-8 p-0 text-neutral-400 hover:text-white hover:bg-white/5"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
                     </div>
                   </TableCell>
                 </motion.tr>
               ))}
             </AnimatePresence>
+            {filtered.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-12 text-neutral-500">
+                  {search ? t("list.noSearchResults") : t("list.noTrainers")}
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
-        {filtered.length === 0 && (
-          <div className="text-center py-12 text-neutral-500">
-            <Users className="w-8 h-8 mx-auto mb-3 opacity-50" />
-            <p className="text-sm">{t("list.noTrainers")}</p>
-          </div>
-        )}
       </div>
     </div>
   );
