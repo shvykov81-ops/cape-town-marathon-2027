@@ -104,7 +104,6 @@ export async function PATCH(
     },
   });
 
-  // Use correct Prisma fields: changeType, fieldName, oldValue, newValue
   await prisma.trainerProfileChange.create({
     data: {
       trainerId: id,
@@ -127,11 +126,12 @@ export async function PATCH(
     }).catch(console.error);
   }
 
-  sendTrainerStatusChangeNotification({
-    trainerName: trainer.displayName || trainer.firstName,
-    status: newStatus,
-    reason: reason || undefined,
-  }).catch(console.error);
+  // ─── 3 arguments: trainer, oldStatus, adminName ───
+  sendTrainerStatusChangeNotification(
+    trainer,           // arg 1: trainer object with displayName, firstName, lastName, slug, status
+    trainer.status,    // arg 2: oldStatus
+    session.user.name || session.user.email || "Admin"  // arg 3: adminName
+  ).catch(console.error);
 
   await prisma.notification.create({
     data: {
