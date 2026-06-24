@@ -233,7 +233,6 @@ export default function BookingPage() {
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <AnimatePresence mode="wait">
-              {/* Step 1: Package Selection */}
               {step === 1 && (
                 <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                   <h2 className="text-2xl font-bold mb-6">{t("selectPackage")}</h2>
@@ -273,7 +272,6 @@ export default function BookingPage() {
                 </motion.div>
               )}
 
-              {/* Step 2: Runner Details + Trainer Selection */}
               {step === 2 && (
                 <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                   <h2 className="text-2xl font-bold mb-6">{t("runnerDetails")}</h2>
@@ -313,7 +311,6 @@ export default function BookingPage() {
                     </select>
                   </div>
 
-                  {/* Trainer Selection */}
                   <div className="mb-8">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xl font-bold flex items-center gap-2">
@@ -342,7 +339,6 @@ export default function BookingPage() {
                 </motion.div>
               )}
 
-              {/* Step 3: Extras */}
               {step === 3 && (
                 <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                   <h2 className="text-2xl font-bold mb-6">{t("addExtras")}</h2>
@@ -375,7 +371,6 @@ export default function BookingPage() {
                 </motion.div>
               )}
 
-              {/* Step 4: Review & Confirm */}
               {step === 4 && (
                 <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                   <h2 className="text-2xl font-bold mb-6">{t("review")}</h2>
@@ -456,7 +451,6 @@ export default function BookingPage() {
                 </motion.div>
               )}
 
-              {/* Step 5: Success */}
               {step === 5 && (
                 <motion.div key="step5" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
                   className="text-center py-12">
@@ -495,7 +489,6 @@ export default function BookingPage() {
             )}
           </div>
 
-          {/* Order Summary Sidebar */}
           <div className="lg:col-span-1">
             <div className="sticky top-24 rounded-2xl bg-white/[0.03] border border-white/10 p-6">
               <h3 className="text-lg font-bold mb-4 flex items-center gap-2">

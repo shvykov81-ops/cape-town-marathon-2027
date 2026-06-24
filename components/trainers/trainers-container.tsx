@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { motion, useInView } from "framer-motion";
 import { Loader2, Search, SlidersHorizontal, Star, Users, Award, Globe } from "lucide-react";
 import { TrainerCardFeatured } from "./trainer-card/trainer-card-featured";
@@ -45,6 +45,10 @@ interface TrainersResponse {
     total: number;
     totalPages: number;
   };
+}
+
+interface TrainersContainerProps {
+  locale?: string;
 }
 
 function InlineStats({ stats }: { stats: TrainersResponse["stats"] }) {
@@ -216,8 +220,11 @@ function InlineCTA() {
   );
 }
 
-export function TrainersContainer() {
+export function TrainersContainer({ locale: propLocale }: TrainersContainerProps) {
   const t = useTranslations("trainers");
+  const hookLocale = useLocale();
+  const locale = propLocale || hookLocale;
+
   const [data, setData] = useState<TrainersResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
