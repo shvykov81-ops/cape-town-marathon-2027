@@ -25,11 +25,8 @@ export function TrainerCardCompact({ trainer, index = 0 }: TrainerCardCompactPro
     >
       <Link
         href={`/${locale}/trainers/${trainer.slug}`}
-        className="group flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 
-                   hover:border-teal-500/40 hover:bg-white/[0.07] transition-all duration-300 
-                   cursor-pointer"
+        className="group flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-teal-500/40 hover:bg-white/[0.07] transition-all duration-300 cursor-pointer"
       >
-        {/* Avatar */}
         <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-teal-500/20 to-amber-500/20">
           {imageUrl ? (
             <Image
@@ -54,7 +51,6 @@ export function TrainerCardCompact({ trainer, index = 0 }: TrainerCardCompactPro
           </div>
         </div>
 
-        {/* Info */}
         <div className="flex-1 min-w-0">
           <h4 className="font-semibold text-white truncate group-hover:text-teal-400 transition-colors">
             {name}
@@ -64,8 +60,6 @@ export function TrainerCardCompact({ trainer, index = 0 }: TrainerCardCompactPro
             <span className="text-white/80 font-medium">{trainer.rating.toFixed(1)}</span>
             <span>({trainer.reviewCount})</span>
           </div>
-
-          {/* Specialty badge */}
           {trainer.specialties[0] && (
             <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-xs bg-teal-500/10 text-teal-400 border border-teal-500/20">
               {trainer.specialties[0]}
@@ -73,7 +67,6 @@ export function TrainerCardCompact({ trainer, index = 0 }: TrainerCardCompactPro
           )}
         </div>
 
-        {/* Arrow indicator */}
         <div className="text-white/20 group-hover:text-teal-400/60 transition-colors">
           <ChevronRight className="w-5 h-5" />
         </div>
