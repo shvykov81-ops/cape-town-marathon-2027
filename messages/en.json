@@ -74,6 +74,12 @@
       "redirecting": "Redirecting to dashboard...",
       "error": "Error submitting application",
       "networkError": "Network error. Please try again."
+    },
+    "list": {
+      "allTrainers": "View All Trainers",
+      "noTrainers": "No trainers available at the moment.",
+      "reviews": "reviews",
+      "review": "review"
     }
   },
   "newsletter": {

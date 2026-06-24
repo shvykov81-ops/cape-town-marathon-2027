@@ -5,7 +5,7 @@ import { TrainerProfileStatus } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
 const getPublishedTrainers = unstable_cache(
-  async (where: Record<string, unknown>, skip: number, limit: number, orderBy: Record<string, string>) => {
+  async (where: Record<string, unknown>, skip: number, limit: number, orderBy: Record<string, unknown>) => {
     return prisma.trainer.findMany({
       where,
       skip,
@@ -19,6 +19,7 @@ const getPublishedTrainers = unstable_cache(
         lastName: true,
         headline: true,
         photoUrl: true,
+        photos: true,  // ← ADDED: gallery photos for card display
         specialties: true,
         languages: true,
         experienceYears: true,
@@ -91,7 +92,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Build orderBy
-  let orderBy: Record<string, string>;
+  let orderBy: Record<string, unknown>;
   switch (sortBy) {
     case "rating":
       orderBy = { rating: "desc" };
