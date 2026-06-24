@@ -70,20 +70,26 @@ export function RoleSwitcher() {
 
       const { redirectPath } = await res.json();
 
-      // 2. Update client session via NextAuth update()
-      await update({ activeRole: role });
-
-      // 3. Set unencrypted role cookie for Edge middleware
+      // 2. Set unencrypted role cookie for Edge middleware FIRST
+      //    (before NextAuth update which may fail with 405)
       await setRoleCookie(role);
+
+      // 3. Try NextAuth update — but don't block on it (v5 beta.31 may return 405)
+      try {
+        await update({ activeRole: role });
+      } catch (e) {
+        console.warn("NextAuth update() failed (expected on v5 beta.31):", e);
+      }
 
       // 4. Force refresh server components
       router.refresh();
 
-      // 5. Navigate with full reload — middleware will read x-active-role cookie
+      // 5. Navigate with full reload — middleware reads x-active-role cookie
+      //    Increased delay to ensure cookie is set before navigation
       const targetUrl = `/${locale}/${redirectPath || path}`;
       setTimeout(() => {
         window.location.href = targetUrl;
-      }, 500);
+      }, 800);
     } finally {
       setSwitching(false);
     }
