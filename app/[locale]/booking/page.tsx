@@ -40,6 +40,7 @@ interface Trainer {
   firstName: string;
   lastName: string;
   photoUrl: string | null;
+  photos: string[];
   specialties: string[];
 }
 
@@ -361,11 +362,17 @@ export default function BookingPage() {
                             }`}
                           >
                             <div className="flex items-center gap-3">
-                              {trainer.photoUrl ? (
+                              {(trainer.photos?.[0] || trainer.photoUrl) ? (
                                 <img
-                                  src={trainer.photoUrl}
+                                  src={trainer.photos?.[0] || trainer.photoUrl}
                                   alt={trainer.firstName}
                                   className="w-12 h-12 rounded-full object-cover"
+                                  onError={(e) => {
+                                    const target = e.currentTarget;
+                                    target.style.display = "none";
+                                    const fallback = target.nextElementSibling as HTMLElement;
+                                    if (fallback) fallback.style.display = "flex";
+                                  }}
                                 />
                               ) : (
                                 <div className="w-12 h-12 rounded-full bg-teal-500/20 flex items-center justify-center">
@@ -592,11 +599,17 @@ export default function BookingPage() {
                   </p>
                   {selectedTrainer && (
                     <div className="inline-flex items-center gap-3 px-6 py-4 rounded-2xl glass-card mb-8">
-                      {selectedTrainer.photoUrl ? (
+                      {(selectedTrainer.photos?.[0] || selectedTrainer.photoUrl) ? (
                         <img
-                          src={selectedTrainer.photoUrl}
+                          src={selectedTrainer.photos?.[0] || selectedTrainer.photoUrl}
                           alt=""
                           className="w-12 h-12 rounded-full object-cover"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            target.style.display = "none";
+                            const fallback = target.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = "flex";
+                          }}
                         />
                       ) : (
                         <div className="w-12 h-12 rounded-full bg-teal-500/20 flex items-center justify-center">
