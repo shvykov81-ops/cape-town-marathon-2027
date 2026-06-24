@@ -24,19 +24,21 @@ interface Package {
   name: string;
   description: string;
   durationDays: number;
-  priceBase: number; // NOTE: API may return string/Decimal — always use toNumber() helper
+  priceBase: number;
   type: string;
 }
 
 interface PackageOption {
   id: string;
   name: string;
-  priceAdd: number; // NOTE: API may return string/Decimal — always use toNumber() helper
+  priceAdd: number;
   category: string;
 }
 
+// ─── FIX B-01: Added slug field ──────────────────────────────────────────
 interface Trainer {
   id: string;
+  slug: string;
   firstName: string;
   lastName: string;
   photoUrl: string | null;
@@ -57,7 +59,6 @@ const trustIndicators = [
   { icon: BadgeCheck, label: "Verified" },
 ];
 
-// ─── Helper: safely convert Prisma Decimal/string to number ──────────────
 function toNumber(value: unknown): number {
   if (typeof value === "number") return value;
   if (typeof value === "string") return parseFloat(value) || 0;
@@ -96,8 +97,9 @@ export default function BookingPage() {
           const pkg = pkgs.find((p: Package) => p.name.toLowerCase() === preselectedPackage);
           if (pkg) setSelectedPkg(pkg);
         }
+        // ─── FIX B-01: Match by slug instead of id ─────────────────────
         if (preselectedTrainer) {
-          const trainer = trs.find((t: Trainer) => t.id === preselectedTrainer);
+          const trainer = trs.find((t: Trainer) => t.slug === preselectedTrainer);
           if (trainer) setSelectedTrainer(trainer);
         }
         setLoading(false);
@@ -113,7 +115,6 @@ export default function BookingPage() {
     }
   }, [selectedPkg]);
 
-  // ─── FIXED: Numeric total calculation ────────────────────────────────────
   const total =
     toNumber(selectedPkg?.priceBase) +
     selectedExtras.reduce((sum, id) => {
@@ -158,14 +159,12 @@ export default function BookingPage() {
 
   return (
     <main className="min-h-screen bg-neutral-950 pt-24 pb-20">
-      {/* Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/3 left-1/3 w-[500px] h-[500px] bg-teal-500/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/3 right-1/3 w-[500px] h-[500px] bg-amber-500/5 rounded-full blur-3xl" />
       </div>
 
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -180,7 +179,6 @@ export default function BookingPage() {
           </p>
         </motion.div>
 
-        {/* Stepper */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -233,10 +231,8 @@ export default function BookingPage() {
         </motion.div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
           <div className="lg:col-span-2">
             <AnimatePresence mode="wait">
-              {/* Step 1: Package */}
               {step === 1 && (
                 <motion.div
                   key="step1"
@@ -303,7 +299,6 @@ export default function BookingPage() {
                 </motion.div>
               )}
 
-              {/* Step 2: Details */}
               {step === 2 && (
                 <motion.div
                   key="step2"
@@ -342,7 +337,6 @@ export default function BookingPage() {
                     ))}
                   </div>
 
-                  {/* Trainer selection */}
                   {trainers.length > 0 && (
                     <div className="mt-8">
                       <h3 className="text-lg font-bold mb-4">Select Trainer (Optional)</h3>
@@ -396,7 +390,6 @@ export default function BookingPage() {
                 </motion.div>
               )}
 
-              {/* Step 3: Extras */}
               {step === 3 && (
                 <motion.div
                   key="step3"
@@ -457,7 +450,6 @@ export default function BookingPage() {
                 </motion.div>
               )}
 
-              {/* Step 4: Review */}
               {step === 4 && (
                 <motion.div
                   key="step4"
@@ -468,7 +460,6 @@ export default function BookingPage() {
                   <h2 className="text-2xl font-bold mb-6">Review Your Booking</h2>
 
                   <div className="space-y-6">
-                    {/* Package summary */}
                     <div className="p-6 rounded-2xl glass-card">
                       <h3 className="text-sm font-medium text-neutral-400 mb-4 uppercase tracking-wider">
                         Package
@@ -484,7 +475,6 @@ export default function BookingPage() {
                       </div>
                     </div>
 
-                    {/* Extras summary */}
                     {selectedExtras.length > 0 && (
                       <div className="p-6 rounded-2xl glass-card">
                         <h3 className="text-sm font-medium text-neutral-400 mb-4 uppercase tracking-wider">
@@ -506,7 +496,6 @@ export default function BookingPage() {
                       </div>
                     )}
 
-                    {/* Personal info summary */}
                     <div className="p-6 rounded-2xl glass-card">
                       <h3 className="text-sm font-medium text-neutral-400 mb-4 uppercase tracking-wider">
                         Personal Information
@@ -537,7 +526,6 @@ export default function BookingPage() {
                       </div>
                     </div>
 
-                    {/* Error */}
                     {status === "error" && (
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
@@ -549,7 +537,6 @@ export default function BookingPage() {
                       </motion.div>
                     )}
 
-                    {/* Submit */}
                     <button
                       onClick={handleSubmit}
                       disabled={status === "submitting"}
@@ -576,7 +563,6 @@ export default function BookingPage() {
                 </motion.div>
               )}
 
-              {/* Step 5: Success */}
               {step === 5 && (
                 <motion.div
                   key="step5"
@@ -643,7 +629,6 @@ export default function BookingPage() {
               )}
             </AnimatePresence>
 
-            {/* Navigation */}
             {step < 5 && (
               <div className="flex justify-between mt-8">
                 <button
@@ -666,7 +651,6 @@ export default function BookingPage() {
             )}
           </div>
 
-          {/* Order Summary Sidebar */}
           <div className="lg:col-span-1">
             <div className="sticky top-24">
               <motion.div
@@ -677,7 +661,6 @@ export default function BookingPage() {
               >
                 <h3 className="text-lg font-bold mb-6">Order Summary</h3>
 
-                {/* Trust indicators */}
                 <div className="flex items-center justify-between mb-6 pb-6 border-b border-white/10">
                   {trustIndicators.map((t) => (
                     <div key={t.label} className="flex flex-col items-center gap-1">
@@ -687,7 +670,6 @@ export default function BookingPage() {
                   ))}
                 </div>
 
-                {/* Package */}
                 {selectedPkg && (
                   <div className="mb-4 pb-4 border-b border-white/10">
                     <div className="flex justify-between items-start mb-1">
@@ -700,7 +682,6 @@ export default function BookingPage() {
                   </div>
                 )}
 
-                {/* Extras */}
                 {selectedExtras.length > 0 && (
                   <div className="mb-4 pb-4 border-b border-white/10 space-y-2">
                     {selectedExtras.map((id) => {
@@ -715,7 +696,6 @@ export default function BookingPage() {
                   </div>
                 )}
 
-                {/* Trainer */}
                 {selectedTrainer && (
                   <div className="mb-4 pb-4 border-b border-white/10">
                     <div className="flex items-center gap-3">
@@ -746,13 +726,11 @@ export default function BookingPage() {
                   </div>
                 )}
 
-                {/* Total */}
                 <div className="flex justify-between items-center pt-2">
                   <span className="text-lg font-bold text-white">Total</span>
                   <span className="text-2xl font-bold gradient-text">${total.toLocaleString()}</span>
                 </div>
 
-                {/* Secure note */}
                 <div className="mt-6 flex items-center gap-2 text-xs text-neutral-500">
                   <Lock className="w-3 h-3" />
                   Secure booking. Your data is encrypted.
