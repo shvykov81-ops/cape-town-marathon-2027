@@ -32,6 +32,13 @@ const getTrainer = unstable_cache(
   { revalidate: 300, tags: ["trainers"] }
 );
 
+// ─── Safe date serialization (handles both Date objects and strings from cache) ───
+function serializeDate(date: Date | string | null | undefined): string {
+  if (!date) return new Date().toISOString();
+  if (typeof date === "string") return date;
+  return date.toISOString();
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale, slug } = await params;
   const t = await getTranslations({ locale, namespace: "trainersPage.metadata" });
@@ -68,15 +75,15 @@ export default async function TrainerSlugPage({ params }: PageProps) {
     data: { profileViews: { increment: 1 } },
   }).catch(() => {});
 
-  // Serialize dates for client component
+  // Serialize dates for client component (safe for cache hits too)
   const serializedTrainer = {
     ...trainer,
-    createdAt: trainer.createdAt?.toISOString() || new Date().toISOString(),
-    updatedAt: trainer.updatedAt?.toISOString() || null,
-    publishedAt: trainer.publishedAt?.toISOString() || null,
+    createdAt: serializeDate(trainer.createdAt),
+    updatedAt: trainer.updatedAt ? serializeDate(trainer.updatedAt) : null,
+    publishedAt: trainer.publishedAt ? serializeDate(trainer.publishedAt) : null,
     reviews: trainer.reviews.map((r) => ({
       ...r,
-      createdAt: r.createdAt?.toISOString() || new Date().toISOString(),
+      createdAt: serializeDate(r.createdAt),
     })),
   };
 
