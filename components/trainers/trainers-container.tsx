@@ -22,6 +22,7 @@ interface Trainer {
   bio: string;
   credentials: string;
   photoUrl: string | null;
+  photos: string[];
   rating: number;
   reviewCount: number;
   specialties: string[];

@@ -15,6 +15,7 @@ interface TrainerWithStats {
   headline: string | null;
   bio: string;
   photoUrl: string | null;
+  photos: string[];
   rating: number;
   reviewCount: number;
   specialties: string[];
@@ -30,6 +31,8 @@ interface TrainerCardFeaturedProps {
 export function TrainerCardFeatured({ trainer }: TrainerCardFeaturedProps) {
   const t = useTranslations("trainersPage");
   const name = trainer.displayName || `${trainer.firstName} ${trainer.lastName}`;
+  // Priority: photos[0] → photoUrl → fallback
+  const imageUrl = trainer.photos?.[0] || trainer.photoUrl;
 
   return (
     <motion.div
@@ -46,22 +49,30 @@ export function TrainerCardFeatured({ trainer }: TrainerCardFeaturedProps) {
           <div className="flex flex-col lg:flex-row">
             {/* Photo */}
             <div className="relative w-full lg:w-80 h-64 lg:h-auto flex-shrink-0">
-              {trainer.photoUrl ? (
+              {imageUrl ? (
                 <Image
-                  src={trainer.photoUrl}
+                  src={imageUrl}
                   alt={name}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                   sizes="(max-width: 1024px) 100vw, 320px"
                   priority
+                  onError={(e) => {
+                    const target = e.currentTarget as HTMLImageElement;
+                    target.style.display = "none";
+                    const fallback = target.parentElement?.querySelector(".img-fallback") as HTMLElement;
+                    if (fallback) fallback.style.display = "flex";
+                  }}
                 />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-[#1a1a25] to-[#0a0a0f] flex items-center justify-center">
-                  <span className="text-6xl font-bold text-[#ff6b35]/30">
-                    {name[0]?.toUpperCase()}
-                  </span>
-                </div>
-              )}
+              ) : null}
+              <div
+                className="img-fallback absolute inset-0 bg-gradient-to-br from-[#1a1a25] to-[#0a0a0f] flex items-center justify-center"
+                style={{ display: imageUrl ? "none" : "flex" }}
+              >
+                <span className="text-6xl font-bold text-[#ff6b35]/30">
+                  {name[0]?.toUpperCase()}
+                </span>
+              </div>
               <div className="absolute top-4 left-4">
                 <span className="px-3 py-1 bg-[#ff6b35] text-white text-xs font-bold rounded-full">
                   {t("card.featured")}
