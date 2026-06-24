@@ -168,9 +168,10 @@ export default function TrainerDashboardPage() {
   }
 
   const status = statusConfig[stats.status as keyof typeof statusConfig] || statusConfig.DRAFT;
-  const allPhotos = profile.photoUrl
-    ? [profile.photoUrl, ...profile.photos.filter((p: string) => p !== profile.photoUrl)]
-    : profile.photos;
+    const heroPhoto = profile.photoUrl || (profile.photos && profile.photos.length > 0 ? profile.photos[0] : null);
+    const allPhotos = heroPhoto
+        ? [heroPhoto, ...profile.photos.filter((p: string) => p !== heroPhoto)]
+        : profile.photos;
 
   const statCards = [
     { key: "views", value: stats.profileViews || 0, icon: Eye, color: "text-[#4a9eff]", label: locale === "ru" ? "Просмотры" : "Views" },
@@ -283,11 +284,21 @@ export default function TrainerDashboardPage() {
             <div className="p-6 rounded-2xl bg-gradient-to-br from-[#111118] to-[#0d0d14] border border-white/[0.06]">
               <div className="flex items-start gap-6">
                 <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-white/[0.05] flex-shrink-0">
-                  {profile.photoUrl ? (
-                    <Image src={profile.photoUrl} alt={profile.displayName} fill className="object-cover" />
-                  ) : (
-                    <UserCircle className="w-full h-full p-4 text-white/20" />
-                  )}
+                                  {heroPhoto ? (
+                                      <Image
+                                          src={heroPhoto}
+                                          alt={profile.displayName}
+                                          fill
+                                          className="object-cover"
+                                          unoptimized={heroPhoto.startsWith("http")}
+                                      />
+                                  ) : (
+                                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-teal-500/20 to-amber-500/20">
+                                          <span className="text-4xl font-bold text-white/30">
+                                              {(profile.displayName || profile.firstName || "T").charAt(0).toUpperCase()}
+                                          </span>
+                                      </div>
+                                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-bold text-white mb-1">{profile.displayName}</h3>

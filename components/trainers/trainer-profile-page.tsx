@@ -1,66 +1,120 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { useTranslations, useLocale } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft,
   Star,
+  ArrowLeft,
+  Eye,
   MapPin,
   Globe,
   Instagram,
-  Award,
-  Calendar,
-  MessageSquare,
+  ExternalLink,
+  X,
   ChevronLeft,
   ChevronRight,
-  X,
-  ExternalLink,
+  Award,
   Clock,
   Users,
-  TrendingUp,
+  MessageSquare,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
-interface TrainerProfilePageProps {
-  locale?: string;
-  trainer: {
+interface Trainer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  displayName: string | null;
+  slug: string;
+  headline: string | null;
+  bio: string | null;
+  bioHtml: string | null;
+  credentials: string | null;
+  photoUrl: string | null;
+  photos: string[];
+  videoUrl: string | null;
+  videoThumbnail: string | null;
+  instagramUrl: string | null;
+  stravaUrl: string | null;
+  tripsterUrl: string | null;
+  websiteUrl: string | null;
+  specialties: string[];
+  languages: string[];
+  experienceYears: number | null;
+  rating: number;
+  reviewCount: number;
+  profileViews: number;
+  maxClientsPerMonth: number | null;
+  reviews: Array<{
     id: string;
-    slug: string;
-    firstName: string | null;
-    lastName: string | null;
-    displayName: string | null;
-    headline: string | null;
-    bio: string | null;
-    bioHtml?: string | null;
-    photoUrl: string | null;
-    photos: string[];
-    specialties: string[];
-    languages: string[];
-    credentials: string | null;
-    experienceYears: number | null;
     rating: number;
-    reviewCount: number;
-    profileViews: number;
-    instagramUrl: string | null;
-    stravaUrl: string | null;
-    tripsterUrl: string | null;
-    websiteUrl: string | null;
+    text: string | null;
     createdAt: string;
-    reviews: Array<{
-      id: string;
-      rating: number;
-      text: string | null;
-      createdAt: string;
-      user: { name: string | null };
-    }>;
-  };
+    user: { name: string | null };
+  }>;
 }
 
-function reviewLabel(count: number, locale: string): string {
+interface TrainerProfilePageProps {
+  trainer: Trainer;
+  locale: string;
+}
+
+function t(key: string, locale: string) {
+  const dict: Record<string, Record<string, string>> = {
+    en: {
+      "profile.back": "Back to trainers",
+      "profile.about": "About",
+      "profile.specialties": "Specialties",
+      "profile.languages": "Languages",
+      "profile.rating": "Reviews",
+      "profile.bookWith": "Book with",
+      "profile.certified": "Certified Coach",
+      "profile.yearsExp": "years exp.",
+      "profile.views": "views",
+      "profile.reviews": "reviews",
+      "profile.noBio": "No bio yet",
+      "profile.credentials": "Credentials",
+      "profile.gallery": "Gallery",
+      "profile.readyToTrain": "Ready to train?",
+      "profile.bookSession": "Book a personal session with this coach",
+      "profile.viewInstagram": "View Instagram",
+      "profile.viewStrava": "View Strava",
+      "profile.viewTripster": "View Tripster",
+      "profile.viewWebsite": "View Website",
+      "profile.verified": "Verified Coach",
+      "profile.sessions": "sessions",
+      "profile.perMonth": "per month",
+    },
+    ru: {
+      "profile.back": "← Назад к тренерам",
+      "profile.about": "О тренере",
+      "profile.specialties": "Специализации",
+      "profile.languages": "Языки",
+      "profile.rating": "Отзывы",
+      "profile.bookWith": "Забронировать с",
+      "profile.certified": "Сертифицированный тренер",
+      "profile.yearsExp": "лет опыта",
+      "profile.views": "просмотров",
+      "profile.reviews": "отзывов",
+      "profile.noBio": "Биография пока не заполнена",
+      "profile.credentials": "Квалификация",
+      "profile.gallery": "Галерея",
+      "profile.readyToTrain": "Готовы тренироваться?",
+      "profile.bookSession": "Забронируйте персональную сессию с этим тренером",
+      "profile.viewInstagram": "Открыть Instagram",
+      "profile.viewStrava": "Открыть Strava",
+      "profile.viewTripster": "Открыть Tripster",
+      "profile.viewWebsite": "Открыть сайт",
+      "profile.verified": "Проверенный тренер",
+      "profile.sessions": "сессий",
+      "profile.perMonth": "в месяц",
+    },
+  };
+  return dict[locale]?.[key] || key;
+}
+
+function reviewLabel(count: number, locale: string) {
   if (locale === "ru") {
     if (count % 10 === 1 && count % 100 !== 11) return "отзыв";
     if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) return "отзыва";
@@ -69,342 +123,261 @@ function reviewLabel(count: number, locale: string): string {
   return count === 1 ? "review" : "reviews";
 }
 
-export function TrainerProfilePage({ trainer }: TrainerProfilePageProps) {
-  const t = useTranslations("trainersPage");
-  const locale = useLocale();
-  const router = useRouter();
+export function TrainerProfilePage({ trainer, locale }: TrainerProfilePageProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [imageLoaded, setImageLoaded] = useState<Record<number, boolean>>({});
 
-  const name = trainer.displayName || `${trainer.firstName} ${trainer.lastName}`.trim();
-  const allPhotos = trainer.photoUrl
-    ? [trainer.photoUrl, ...trainer.photos.filter((p) => p !== trainer.photoUrl)]
-    : trainer.photos;
+  const name = trainer.displayName || `${trainer.firstName} ${trainer.lastName}`;
+  const firstName = trainer.firstName;
+
+  // ─── FIX: Use first photo from photos as fallback for photoUrl ───
+  const heroPhoto = trainer.photoUrl || (trainer.photos && trainer.photos.length > 0 ? trainer.photos[0] : null);
+  const allPhotos = [heroPhoto, ...(trainer.photos || [])].filter(Boolean) as string[];
+  // Remove duplicates
+  const uniquePhotos = [...new Set(allPhotos)];
 
   const openLightbox = (index: number) => {
     setLightboxIndex(index);
     setLightboxOpen(true);
-    document.body.style.overflow = "hidden";
   };
 
-  const closeLightbox = () => {
-    setLightboxOpen(false);
-    document.body.style.overflow = "";
-  };
-
-  const goToPrev = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    setLightboxIndex((i) => (i > 0 ? i - 1 : allPhotos.length - 1));
-  };
-
-  const goToNext = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    setLightboxIndex((i) => (i < allPhotos.length - 1 ? i + 1 : 0));
-  };
+  const nextPhoto = () => setLightboxIndex((prev) => (prev + 1) % uniquePhotos.length);
+  const prevPhoto = () => setLightboxIndex((prev) => (prev - 1 + uniquePhotos.length) % uniquePhotos.length);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
+    <div className="min-h-screen bg-neutral-950 text-white">
       {/* ─── HERO SECTION ─── */}
-      <section className="relative min-h-[70vh] lg:min-h-[80vh] overflow-hidden">
-        {/* Background with parallax effect */}
-        <div className="absolute inset-0">
-          {allPhotos.length > 0 ? (
+      <div className="relative h-[70vh] min-h-[500px] overflow-hidden">
+        {/* Background Image */}
+        {uniquePhotos.length > 0 ? (
+          <div className="absolute inset-0">
             <Image
-              src={allPhotos[0]}
+              src={uniquePhotos[0]}
               alt={name}
               fill
               className="object-cover"
               priority
-              sizes="100vw"
+              unoptimized={uniquePhotos[0].startsWith("http")}
+              onLoad={() => setImageLoaded((p) => ({ ...p, 0: true }))}
             />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#0f3460]" />
-          )}
-          {/* Premium gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0f]/80 via-transparent to-[#0a0a0f]/40" />
-          {/* Subtle noise texture */}
-          <div
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-            }}
-          />
-        </div>
+            {/* Premium gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-neutral-950/40 to-transparent" />
+          </div>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-teal-900/30 to-amber-900/20 flex items-center justify-center">
+            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-teal-500/20 to-amber-500/20 flex items-center justify-center text-6xl font-bold text-white/30">
+              {firstName.charAt(0).toUpperCase()}
+            </div>
+          </div>
+        )}
+
+        {/* Subtle noise texture */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")` }} />
 
         {/* Back button - floating glassmorphism */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-          className="absolute top-6 left-4 lg:left-8 z-20"
+        <Link
+          href={`/${locale}/trainers`}
+          className="absolute top-6 left-6 z-20 flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-sm text-white/80 hover:bg-white/20 hover:text-white transition-all"
         >
-          <Link
-            href={`/${locale}/trainers`}
-            className="group inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/[0.08] backdrop-blur-xl border border-white/[0.1] text-white/80 hover:text-white hover:bg-white/[0.12] hover:border-white/[0.2] transition-all duration-300"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            <span className="text-sm font-medium">{t("profile.back")}</span>
-          </Link>
-        </motion.div>
+          <ArrowLeft className="w-4 h-4" />
+          {t("profile.back", locale)}
+        </Link>
 
         {/* Content overlay */}
-        <div className="relative z-10 container mx-auto px-4 lg:px-8 pt-32 lg:pt-40 pb-12">
-          <div className="max-w-4xl">
+        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 z-10">
+          <div className="max-w-6xl mx-auto">
             {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#00d4aa]/10 border border-[#00d4aa]/20 text-[#00d4aa] text-xs font-semibold uppercase tracking-wider mb-6"
-            >
-              <Award className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/20 border border-teal-500/30 text-teal-300 text-sm mb-4">
+              <Award className="w-4 h-4" />
               {locale === "ru" ? "Сертифицированный тренер" : "Certified Coach"}
-            </motion.div>
+            </div>
 
             {/* Name */}
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-              className="text-4xl lg:text-6xl font-bold text-white mb-4 tracking-tight"
-            >
+            <h1 className="text-4xl md:text-6xl font-bold mb-3 tracking-tight">
               {name}
-            </motion.h1>
+            </h1>
 
             {/* Headline */}
             {trainer.headline && (
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="text-lg lg:text-xl text-white/60 mb-6 max-w-2xl leading-relaxed"
-              >
+              <p className="text-lg md:text-xl text-white/70 max-w-2xl mb-6 leading-relaxed">
                 {trainer.headline}
-              </motion.p>
+              </p>
             )}
 
             {/* Quick stats row */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="flex flex-wrap items-center gap-4 lg:gap-6"
-            >
+            <div className="flex flex-wrap items-center gap-4 md:gap-6">
               {/* Rating */}
               <div className="flex items-center gap-1.5">
-                <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                <span className="text-white font-semibold text-lg">{trainer.rating.toFixed(1)}</span>
-                <span className="text-white/40 text-sm">
+                <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
+                <span className="text-lg font-semibold">{trainer.rating.toFixed(1)}</span>
+                <span className="text-white/50">
                   ({trainer.reviewCount} {reviewLabel(trainer.reviewCount, locale)})
                 </span>
               </div>
 
               {/* Experience */}
               {trainer.experienceYears && (
-                <div className="flex items-center gap-1.5 text-white/60">
-                  <Clock className="w-4 h-4" />
-                  <span className="text-sm">
-                    {trainer.experienceYears} {locale === "ru" ? "лет опыта" : "years exp."}
-                  </span>
+                <div className="flex items-center gap-1.5 text-white/70">
+                  <Clock className="w-5 h-5 text-teal-400" />
+                  <span>{trainer.experienceYears} {locale === "ru" ? "лет опыта" : "years exp."}</span>
                 </div>
               )}
 
               {/* Views */}
-              <div className="flex items-center gap-1.5 text-white/60">
-                <TrendingUp className="w-4 h-4" />
-                <span className="text-sm">
-                  {trainer.profileViews.toLocaleString()} {t("card.views")}
-                </span>
+              <div className="flex items-center gap-1.5 text-white/50">
+                <Eye className="w-5 h-5" />
+                <span>{trainer.profileViews.toLocaleString()} {t("profile.views", locale)}</span>
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
 
         {/* Scroll indicator */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          className="absolute bottom-4 left-1/2 -translate-x-1/2"
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
         >
           <div className="w-6 h-10 rounded-full border-2 border-white/20 flex justify-center pt-2">
-            <motion.div
-              animate={{ y: [0, 8, 0] }}
-              transition={{ repeat: Infinity, duration: 1.5 }}
-              className="w-1 h-2 bg-white/40 rounded-full"
-            />
+            <div className="w-1.5 h-1.5 rounded-full bg-white/50" />
           </div>
         </motion.div>
-      </section>
+      </div>
 
       {/* ─── MAIN CONTENT ─── */}
-      <section className="container mx-auto px-4 lg:px-8 py-12 lg:py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 py-12 md:py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
           {/* ─── LEFT COLUMN ─── */}
-          <div className="lg:col-span-7 space-y-8">
+          <div className="lg:col-span-2 space-y-10">
             {/* About */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="space-y-4"
-            >
-              <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                <span className="w-8 h-[2px] bg-[#00d4aa]" />
-                {t("profile.about")}
+            <section>
+              <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                <MessageSquare className="w-6 h-6 text-teal-400" />
+                {t("profile.about", locale)}
               </h2>
-              <div className="prose prose-invert prose-lg max-w-none">
-                {trainer.bioHtml ? (
-                  <div dangerouslySetInnerHTML={{ __html: trainer.bioHtml }} />
-                ) : trainer.bio ? (
-                  <p className="text-white/70 leading-relaxed whitespace-pre-line">{trainer.bio}</p>
-                ) : (
-                  <p className="text-white/40 italic">{locale === "ru" ? "Биография пока не заполнена" : "No bio yet"}</p>
-                )}
-              </div>
-            </motion.div>
+              {trainer.bioHtml ? (
+                <div
+                  className="prose prose-invert prose-lg max-w-none leading-relaxed text-white/80"
+                  dangerouslySetInnerHTML={{ __html: trainer.bioHtml }}
+                />
+              ) : trainer.bio ? (
+                <div className="prose prose-invert prose-lg max-w-none leading-relaxed text-white/80 whitespace-pre-line">
+                  {trainer.bio}
+                </div>
+              ) : (
+                <p className="text-white/40 italic">{t("profile.noBio", locale)}</p>
+              )}
+            </section>
 
             {/* Credentials */}
             {trainer.credentials && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="p-6 rounded-2xl bg-gradient-to-br from-[#111118] to-[#0d0d14] border border-white/[0.06]"
-              >
-                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                  <Award className="w-5 h-5 text-[#00d4aa]" />
+              <section>
+                <h3 className="text-xl font-bold mb-3 flex items-center gap-2">
+                  <Award className="w-5 h-5 text-amber-400" />
                   {locale === "ru" ? "Квалификация" : "Credentials"}
                 </h3>
-                <p className="text-white/60 leading-relaxed">{trainer.credentials}</p>
-              </motion.div>
+                <p className="text-white/70 leading-relaxed">{trainer.credentials}</p>
+              </section>
             )}
 
             {/* Reviews */}
             {trainer.reviews.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="space-y-6"
-              >
-                <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                  <span className="w-8 h-[2px] bg-[#00d4aa]" />
-                  {t("profile.rating")} ({trainer.reviewCount} {reviewLabel(trainer.reviewCount, locale)})
+              <section>
+                <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                  <Star className="w-6 h-6 text-amber-400" />
+                  {t("profile.rating", locale)} ({trainer.reviewCount} {reviewLabel(trainer.reviewCount, locale)})
                 </h2>
                 <div className="space-y-4">
                   {trainer.reviews.map((review, i) => (
-                    <motion.div
+                    <div
                       key={review.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.1 }}
-                      className="p-5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] transition-colors"
+                      className="p-5 rounded-2xl bg-white/5 border border-white/10"
                     >
-                      <div className="flex items-center gap-1 mb-3">
+                      <div className="flex items-center gap-1 mb-2">
                         {[...Array(5)].map((_, j) => (
                           <Star
                             key={j}
-                            className={cn(
-                              "w-4 h-4",
+                            className={`w-4 h-4 ${
                               j < review.rating
-                                ? "text-yellow-400 fill-yellow-400"
-                                : "text-white/10"
-                            )}
+                                ? "text-amber-400 fill-amber-400"
+                                : "text-white/20"
+                            }`}
                           />
                         ))}
                       </div>
-                      <p className="text-white/70 text-sm leading-relaxed mb-3">
-                        {review.text || ""}
-                      </p>
-                      <div className="flex items-center gap-2 text-white/40 text-xs">
-                        <Users className="w-3.5 h-3.5" />
+                      <p className="text-white/80 mb-3 leading-relaxed">{review.text || ""}</p>
+                      <div className="flex items-center gap-2 text-sm text-white/40">
                         <span>{review.user.name || "Anonymous"}</span>
                         <span>·</span>
                         <span>{new Date(review.createdAt).toLocaleDateString(locale === "ru" ? "ru-RU" : "en-GB")}</span>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
-              </motion.div>
+              </section>
             )}
           </div>
 
           {/* ─── RIGHT COLUMN ─── */}
-          <div className="lg:col-span-5 space-y-6">
+          <div className="space-y-8">
             {/* Photo Gallery - Premium Grid */}
-            {allPhotos.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="space-y-4"
-              >
-                <h3 className="text-lg font-semibold text-white/80 flex items-center gap-2">
-                  <ImageIcon className="w-5 h-5 text-[#00d4aa]" />
+            {uniquePhotos.length > 0 && (
+              <section>
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-teal-400" />
                   {locale === "ru" ? "Галерея" : "Gallery"}
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
-                  {allPhotos.slice(0, 3).map((photo, i) => (
+                  {uniquePhotos.slice(0, 3).map((photo, i) => (
                     <motion.div
                       key={i}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.1 }}
-                      className={cn(
-                        "relative overflow-hidden rounded-xl cursor-pointer group",
-                        i === 0 ? "col-span-2 aspect-[16/9]" : "aspect-square"
-                      )}
+                      className={`relative aspect-square rounded-xl overflow-hidden cursor-pointer group ${
+                        i === 0 ? "col-span-2 aspect-[16/10]" : ""
+                      }`}
+                      whileHover={{ scale: 1.02 }}
                       onClick={() => openLightbox(i)}
                     >
                       <Image
                         src={photo}
-                        alt={`${name} — ${locale === "ru" ? "фото" : "photo"} ${i + 1}`}
+                        alt={`${name} photo ${i + 1}`}
                         fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                        sizes={i === 0 ? "(max-width: 1024px) 100vw, 500px" : "(max-width: 1024px) 50vw, 250px"}
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                        unoptimized={photo.startsWith("http")}
                         onLoad={() => setImageLoaded((p) => ({ ...p, [i]: true }))}
                       />
                       {!imageLoaded[i] && (
-                        <div className="absolute inset-0 bg-[#111118] animate-pulse" />
+                        <div className="absolute inset-0 bg-neutral-800 animate-pulse" />
                       )}
                       {/* Hover overlay */}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-center justify-center">
-                        <ExternalLink className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 scale-75 group-hover:scale-100" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                        <ExternalLink className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
                       {/* Photo counter badge */}
-                      {i === 2 && allPhotos.length > 3 && (
-                        <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm text-white text-xs font-medium">
-                          +{allPhotos.length - 3}
+                      {i === 2 && uniquePhotos.length > 3 && (
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                          <span className="text-2xl font-bold text-white">+{uniquePhotos.length - 3}</span>
                         </div>
                       )}
                     </motion.div>
                   ))}
                 </div>
-              </motion.div>
+              </section>
             )}
 
             {/* Info Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="p-6 rounded-2xl bg-gradient-to-br from-[#111118] to-[#0d0d14] border border-white/[0.06] space-y-5"
-            >
+            <div className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-6">
               {/* Specialties */}
               <div>
                 <h3 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-3">
-                  {t("profile.specialties")}
+                  {t("profile.specialties", locale)}
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {trainer.specialties.map((s) => (
                     <span
                       key={s}
-                      className="px-3 py-1.5 rounded-full text-sm bg-[#00d4aa]/10 text-[#00d4aa] border border-[#00d4aa]/20"
+                      className="px-3 py-1.5 rounded-lg bg-teal-500/10 border border-teal-500/20 text-teal-300 text-sm"
                     >
                       {s}
                     </span>
@@ -416,14 +389,15 @@ export function TrainerProfilePage({ trainer }: TrainerProfilePageProps) {
               {trainer.languages.length > 0 && (
                 <div>
                   <h3 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-3">
-                    {t("profile.languages")}
+                    {t("profile.languages", locale)}
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {trainer.languages.map((l) => (
                       <span
                         key={l}
-                        className="px-3 py-1.5 rounded-full text-sm bg-white/[0.05] text-white/70 border border-white/[0.08]"
+                        className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/70 text-sm flex items-center gap-1.5"
                       >
+                        <Globe className="w-3.5 h-3.5" />
                         {l}
                       </span>
                     ))}
@@ -432,20 +406,21 @@ export function TrainerProfilePage({ trainer }: TrainerProfilePageProps) {
               )}
 
               {/* Social Links */}
-              <div className="pt-4 border-t border-white/[0.06]">
+              <div className="pt-4 border-t border-white/10">
                 <h3 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-3">
                   {locale === "ru" ? "Ссылки" : "Links"}
                 </h3>
-                <div className="flex flex-wrap gap-3">
+                <div className="space-y-2">
                   {trainer.instagramUrl && (
                     <a
                       href={trainer.instagramUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 text-purple-300 hover:border-purple-500/40 transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-white/80 hover:text-white"
                     >
-                      <Instagram className="w-4 h-4" />
-                      <span className="text-sm font-medium">Instagram</span>
+                      <Instagram className="w-5 h-5 text-pink-400" />
+                      <span className="text-sm">{t("profile.viewInstagram", locale)}</span>
+                      <ExternalLink className="w-4 h-4 ml-auto text-white/30" />
                     </a>
                   )}
                   {trainer.stravaUrl && (
@@ -453,10 +428,11 @@ export function TrainerProfilePage({ trainer }: TrainerProfilePageProps) {
                       href={trainer.stravaUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/20 text-orange-300 hover:border-orange-500/40 transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-white/80 hover:text-white"
                     >
-                      <Globe className="w-4 h-4" />
-                      <span className="text-sm font-medium">Strava</span>
+                      <ExternalLink className="w-5 h-5 text-orange-400" />
+                      <span className="text-sm">{t("profile.viewStrava", locale)}</span>
+                      <ExternalLink className="w-4 h-4 ml-auto text-white/30" />
                     </a>
                   )}
                   {trainer.tripsterUrl && (
@@ -464,10 +440,11 @@ export function TrainerProfilePage({ trainer }: TrainerProfilePageProps) {
                       href={trainer.tripsterUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 text-blue-300 hover:border-blue-500/40 transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-white/80 hover:text-white"
                     >
-                      <MapPin className="w-4 h-4" />
-                      <span className="text-sm font-medium">Tripster</span>
+                      <MapPin className="w-5 h-5 text-blue-400" />
+                      <span className="text-sm">{t("profile.viewTripster", locale)}</span>
+                      <ExternalLink className="w-4 h-4 ml-auto text-white/30" />
                     </a>
                   )}
                   {trainer.websiteUrl && (
@@ -475,24 +452,20 @@ export function TrainerProfilePage({ trainer }: TrainerProfilePageProps) {
                       href={trainer.websiteUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-teal-500/10 to-emerald-500/10 border border-teal-500/20 text-teal-300 hover:border-teal-500/40 transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-white/80 hover:text-white"
                     >
-                      <Globe className="w-4 h-4" />
-                      <span className="text-sm font-medium">Website</span>
+                      <Globe className="w-5 h-5 text-teal-400" />
+                      <span className="text-sm">{t("profile.viewWebsite", locale)}</span>
+                      <ExternalLink className="w-4 h-4 ml-auto text-white/30" />
                     </a>
                   )}
                 </div>
               </div>
-            </motion.div>
+            </div>
 
             {/* Book CTA */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="p-6 rounded-2xl bg-gradient-to-br from-[#00d4aa]/10 to-[#00d4aa]/5 border border-[#00d4aa]/20"
-            >
-              <h3 className="text-lg font-bold text-white mb-2">
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-teal-500/20 to-amber-500/10 border border-teal-500/20">
+              <h3 className="text-lg font-bold mb-2">
                 {locale === "ru" ? "Готовы тренироваться?" : "Ready to train?"}
               </h3>
               <p className="text-white/60 text-sm mb-4">
@@ -502,101 +475,82 @@ export function TrainerProfilePage({ trainer }: TrainerProfilePageProps) {
               </p>
               <Link
                 href={`/${locale}/booking?trainer=${trainer.slug}`}
-                className="inline-flex items-center justify-center w-full gap-2 px-6 py-3 rounded-xl bg-[#00d4aa] hover:bg-[#00b894] text-[#0a0a0f] font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-[#00d4aa]/20"
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-neutral-950 font-semibold transition-colors"
               >
-                <Calendar className="w-5 h-5" />
-                {t("profile.bookWith")} {trainer.firstName}
+                <Users className="w-5 h-5" />
+                {t("profile.bookWith", locale)} {trainer.firstName}
               </Link>
-            </motion.div>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* ─── LIGHTBOX ─── */}
       <AnimatePresence>
         {lightboxOpen && (
           <motion.div
+            className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center"
-            onClick={closeLightbox}
+            onClick={() => setLightboxOpen(false)}
           >
             {/* Close button */}
             <button
-              onClick={closeLightbox}
-              className="absolute top-6 right-6 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+              className="absolute top-6 right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors z-10"
+              onClick={() => setLightboxOpen(false)}
             >
-              <X className="w-6 h-6" />
+              <X className="w-6 h-6 text-white" />
             </button>
 
             {/* Navigation */}
-            {allPhotos.length > 1 && (
+            {uniquePhotos.length > 1 && (
               <>
                 <button
-                  onClick={goToPrev}
-                  className="absolute left-4 lg:left-8 z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                  className="absolute left-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    prevPhoto();
+                  }}
                 >
-                  <ChevronLeft className="w-6 h-6" />
+                  <ChevronLeft className="w-6 h-6 text-white" />
                 </button>
                 <button
-                  onClick={goToNext}
-                  className="absolute right-4 lg:right-8 z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                  className="absolute right-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nextPhoto();
+                  }}
                 >
-                  <ChevronRight className="w-6 h-6" />
+                  <ChevronRight className="w-6 h-6 text-white" />
                 </button>
               </>
             )}
 
             {/* Counter */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-white/10 text-white text-sm font-medium">
-              {lightboxIndex + 1} / {allPhotos.length}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-white/10 text-white/80 text-sm">
+              {lightboxIndex + 1} / {uniquePhotos.length}
             </div>
 
             {/* Image */}
             <motion.div
-              key={lightboxIndex}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.3 }}
               className="relative w-[90vw] h-[80vh] max-w-5xl"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
             >
               <Image
-                src={allPhotos[lightboxIndex]}
-                alt={`${name} — ${locale === "ru" ? "фото" : "photo"} ${lightboxIndex + 1}`}
+                src={uniquePhotos[lightboxIndex]}
+                alt={`${name} photo ${lightboxIndex + 1}`}
                 fill
                 className="object-contain"
-                sizes="90vw"
-                priority
+                unoptimized={uniquePhotos[lightboxIndex].startsWith("http")}
               />
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
     </div>
-  );
-}
-
-// Icon component for gallery
-function ImageIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-      <circle cx="9" cy="9" r="2" />
-      <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-    </svg>
   );
 }
