@@ -2,84 +2,80 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useLocale } from "next-intl";
+import { Star, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { Star } from "lucide-react";
-
-interface Trainer {
-  id: string;
-  slug: string;
-  displayName: string | null;
-  firstName: string;
-  lastName: string;
-  photoUrl: string | null;
-  photos: string[];
-  rating: number;
-  reviewCount: number;
-  specialties: string[];
-}
+import type { Trainer } from "@/components/trainers/trainers-container";
 
 interface TrainerCardCompactProps {
   trainer: Trainer;
-  index: number;
+  index?: number;
 }
 
-export function TrainerCardCompact({ trainer, index }: TrainerCardCompactProps) {
+export function TrainerCardCompact({ trainer, index = 0 }: TrainerCardCompactProps) {
+  const locale = useLocale();
   const name = trainer.displayName || `${trainer.firstName} ${trainer.lastName}`;
-  // Priority: photos[0] → photoUrl → fallback
-  const imageUrl = trainer.photos?.[0] || trainer.photoUrl;
+  const imageUrl = trainer.photos?.[0] || trainer.photoUrl || null;
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3, delay: index * 0.03 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.06 }}
     >
-      <Link href={`/trainers/${trainer.slug}`}>
-        <div className="bg-[#111118] border border-[#1e1e2e] rounded-lg p-3 hover:border-[#4a9eff]/30 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group">
-          <div className="flex items-center gap-3">
-            {/* Avatar */}
-            <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-[#1e1e2e]">
-              {imageUrl ? (
-                <Image
-                  src={imageUrl}
-                  alt={name}
-                  fill
-                  className="object-cover"
-                  sizes="48px"
-                  loading="lazy"
-                  onError={(e) => {
-                    const target = e.currentTarget as HTMLImageElement;
-                    target.style.display = "none";
-                    const fallback = target.parentElement?.querySelector(".avatar-fallback") as HTMLElement;
-                    if (fallback) fallback.style.display = "flex";
-                  }}
-                />
-              ) : null}
-              <div
-                className="avatar-fallback absolute inset-0 bg-gradient-to-br from-[#1a1a25] to-[#0a0a0f] flex items-center justify-center"
-                style={{ display: imageUrl ? "none" : "flex" }}
-              >
-                <span className="text-sm font-bold text-[#4a9eff]/40">{name[0]?.toUpperCase()}</span>
-              </div>
-            </div>
-
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-bold text-white truncate">{name}</h4>
-              <div className="flex items-center gap-1 mt-0.5">
-                <Star className="w-3 h-3 text-[#ff6b35] fill-[#ff6b35]" />
-                <span className="text-xs text-[#8b8b9a]">{trainer.rating.toFixed(1)}</span>
-                <span className="text-xs text-[#5a5a6a]">({trainer.reviewCount})</span>
-              </div>
-            </div>
-
-            {/* Specialty badge */}
-            {trainer.specialties[0] && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#4a9eff]/10 text-[#4a9eff] border border-[#4a9eff]/20 flex-shrink-0 hidden sm:block">
-                {trainer.specialties[0]}
-              </span>
-            )}
+      <Link
+        href={`/${locale}/trainers/${trainer.slug}`}
+        className="group flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 
+                   hover:border-teal-500/40 hover:bg-white/[0.07] transition-all duration-300 
+                   cursor-pointer"
+      >
+        {/* Avatar */}
+        <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-teal-500/20 to-amber-500/20">
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt={name}
+              fill
+              className="object-cover group-hover:scale-110 transition-transform duration-500"
+              sizes="56px"
+              onError={(e) => {
+                const target = e.currentTarget as HTMLImageElement;
+                target.style.display = "none";
+                const fallback = target.parentElement?.querySelector(".avatar-fallback") as HTMLElement;
+                if (fallback) fallback.style.display = "flex";
+              }}
+            />
+          ) : null}
+          <div
+            className="avatar-fallback absolute inset-0 items-center justify-center text-lg font-bold text-white/80"
+            style={{ display: imageUrl ? "none" : "flex" }}
+          >
+            {name[0]?.toUpperCase()}
           </div>
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold text-white truncate group-hover:text-teal-400 transition-colors">
+            {name}
+          </h4>
+          <div className="flex items-center gap-1 text-sm text-white/60 mt-0.5">
+            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+            <span className="text-white/80 font-medium">{trainer.rating.toFixed(1)}</span>
+            <span>({trainer.reviewCount})</span>
+          </div>
+
+          {/* Specialty badge */}
+          {trainer.specialties[0] && (
+            <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-xs bg-teal-500/10 text-teal-400 border border-teal-500/20">
+              {trainer.specialties[0]}
+            </span>
+          )}
+        </div>
+
+        {/* Arrow indicator */}
+        <div className="text-white/20 group-hover:text-teal-400/60 transition-colors">
+          <ChevronRight className="w-5 h-5" />
         </div>
       </Link>
     </motion.div>

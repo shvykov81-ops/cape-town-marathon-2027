@@ -2,144 +2,106 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
+import { Star, MapPin, ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { Star, MapPin, Award, ArrowRight } from "lucide-react";
-import { useTranslations } from "next-intl";
-
-interface TrainerWithStats {
-  id: string;
-  slug: string;
-  displayName: string | null;
-  firstName: string;
-  lastName: string;
-  headline: string | null;
-  bio: string;
-  photoUrl: string | null;
-  photos: string[];
-  rating: number;
-  reviewCount: number;
-  specialties: string[];
-  languages: string[];
-  experienceYears: number | null;
-  profileViews: number;
-}
+import type { Trainer } from "@/components/trainers/trainers-container";
 
 interface TrainerCardFeaturedProps {
-  trainer: TrainerWithStats;
+  trainer: Trainer;
+  index?: number;
 }
 
-export function TrainerCardFeatured({ trainer }: TrainerCardFeaturedProps) {
-  const t = useTranslations("trainersPage");
+export function TrainerCardFeatured({ trainer, index = 0 }: TrainerCardFeaturedProps) {
+  const locale = useLocale();
+  const t = useTranslations("trainers");
   const name = trainer.displayName || `${trainer.firstName} ${trainer.lastName}`;
-  // Priority: photos[0] → photoUrl → fallback
-  const imageUrl = trainer.photos?.[0] || trainer.photoUrl;
+  const imageUrl = trainer.photos?.[0] || trainer.photoUrl || null;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="relative col-span-full lg:col-span-2"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.6, delay: index * 0.1 }}
+      className="md:col-span-2 md:row-span-2"
     >
-      {/* Glow effect */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-[#ff6b35]/20 via-[#4a9eff]/20 to-[#00d4aa]/20 rounded-2xl blur-xl opacity-60" />
-
-      <Link href={`/trainers/${trainer.slug}`}>
-        <div className="relative bg-[#111118] border border-[#1e1e2e] rounded-2xl overflow-hidden hover:border-[#ff6b35]/40 transition-all duration-300 group">
-          <div className="flex flex-col lg:flex-row">
-            {/* Photo */}
-            <div className="relative w-full lg:w-80 h-64 lg:h-auto flex-shrink-0">
-              {imageUrl ? (
-                <Image
-                  src={imageUrl}
-                  alt={name}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  sizes="(max-width: 1024px) 100vw, 320px"
-                  priority
-                  onError={(e) => {
-                    const target = e.currentTarget as HTMLImageElement;
-                    target.style.display = "none";
-                    const fallback = target.parentElement?.querySelector(".img-fallback") as HTMLElement;
-                    if (fallback) fallback.style.display = "flex";
-                  }}
-                />
-              ) : null}
-              <div
-                className="img-fallback absolute inset-0 bg-gradient-to-br from-[#1a1a25] to-[#0a0a0f] flex items-center justify-center"
-                style={{ display: imageUrl ? "none" : "flex" }}
-              >
-                <span className="text-6xl font-bold text-[#ff6b35]/30">
-                  {name[0]?.toUpperCase()}
-                </span>
-              </div>
-              <div className="absolute top-4 left-4">
-                <span className="px-3 py-1 bg-[#ff6b35] text-white text-xs font-bold rounded-full">
-                  {t("card.featured")}
-                </span>
-              </div>
+      <Link
+        href={`/${locale}/trainers/${trainer.slug}`}
+        className="group block relative h-full rounded-3xl bg-white/[0.03] border border-white/10 overflow-hidden hover:border-teal-500/30 transition-all duration-500"
+      >
+        {/* Photo */}
+        <div className="relative aspect-[16/10] md:aspect-auto md:h-full overflow-hidden">
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt={name}
+              fill
+              className="object-cover group-hover:scale-110 transition-transform duration-700"
+              sizes="(max-width: 768px) 100vw, 800px"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-teal-500/30 to-amber-500/30 flex items-center justify-center">
+              <span className="text-6xl font-bold text-white/20">{name[0]?.toUpperCase()}</span>
             </div>
+          )}
 
-            {/* Content */}
-            <div className="flex-1 p-6 lg:p-8 flex flex-col justify-between">
+          {/* Gradient overlays */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
+
+          {/* Featured badge */}
+          <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-teal-500/20 backdrop-blur-md border border-teal-500/30 text-teal-400 text-sm font-medium">
+            {t("card.featured")}
+          </div>
+
+          {/* Arrow */}
+          <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <ArrowUpRight className="w-5 h-5 text-white" />
+          </div>
+
+          {/* Content overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+            <div className="flex items-end justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-2xl font-bold text-white">{name}</h3>
-                  {trainer.experienceYears && (
-                    <span className="flex items-center gap-1 text-xs text-[#00d4aa] bg-[#00d4aa]/10 px-2 py-0.5 rounded-full">
-                      <Award className="w-3 h-3" />
-                      {trainer.experienceYears}+ {t("card.years")}
-                    </span>
-                  )}
-                </div>
+                <h3 className="text-2xl md:text-3xl font-bold text-white group-hover:text-teal-400 transition-colors">
+                  {name}
+                </h3>
 
-                {trainer.headline && (
-                  <p className="text-[#4a9eff] text-sm font-medium mb-3">{trainer.headline}</p>
+                {trainer.experienceYears && (
+                  <p className="text-white/60 mt-1">
+                    {trainer.experienceYears}+ {t("card.years")}
+                  </p>
                 )}
 
-                <p className="text-[#8b8b9a] text-sm line-clamp-3 mb-4">
-                  {trainer.bio}
-                </p>
+                {trainer.headline && (
+                  <p className="text-white/50 mt-2 max-w-md">{trainer.headline}</p>
+                )}
 
-                <div className="flex items-center gap-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-4 h-4 ${
-                        i < Math.round(trainer.rating)
-                          ? "text-[#ff6b35] fill-[#ff6b35]"
-                          : "text-[#5a5a6a]"
-                      }`}
-                    />
-                  ))}
-                  <span className="text-sm text-[#8b8b9a] ml-2">
-                    {trainer.rating.toFixed(1)} ({trainer.reviewCount} {t("card.reviews")})
-                  </span>
+                <div className="flex items-center gap-2 mt-4">
+                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
+                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    <span className="font-medium text-white">{trainer.rating.toFixed(1)}</span>
+                    <span className="text-white/60">({trainer.reviewCount} {t("card.reviews")})</span>
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mb-4">
+                <div className="flex flex-wrap gap-2 mt-4">
                   {trainer.specialties.slice(0, 4).map((s) => (
-                    <span
-                      key={s}
-                      className="text-xs px-3 py-1 rounded-full bg-[#ff6b35]/10 text-[#ff6b35] border border-[#ff6b35]/20"
-                    >
+                    <span key={s} className="px-3 py-1 rounded-full text-sm bg-white/10 text-white/80 border border-white/10">
                       {s}
                     </span>
                   ))}
                 </div>
-              </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4 text-xs text-[#5a5a6a]">
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-3 h-3" />
-                    {trainer.languages.slice(0, 3).join(", ")}
-                  </span>
+                <div className="flex items-center gap-4 mt-4 text-sm text-white/50">
+                  <span>{trainer.languages.slice(0, 3).join(", ")}</span>
                   <span>{trainer.profileViews.toLocaleString()} {t("card.views")}</span>
                 </div>
-                <span className="flex items-center gap-1 text-[#ff6b35] text-sm font-medium group-hover:gap-2 transition-all">
-                  {t("card.viewProfile")} <ArrowRight className="w-4 h-4" />
-                </span>
+              </div>
+
+              <div className="hidden md:flex items-center gap-2 px-6 py-3 rounded-2xl bg-teal-500 text-black font-semibold hover:bg-teal-400 transition-colors">
+                {t("card.viewProfile")}
+                <ArrowUpRight className="w-5 h-5" />
               </div>
             </div>
           </div>
