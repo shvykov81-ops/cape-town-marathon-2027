@@ -24,6 +24,7 @@ import {
   Award,
   TrendingUp,
   Clock,
+  ImageIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -210,7 +211,7 @@ export default function TrainerDashboardPage() {
             {[
               { id: "overview", label: t("nav.overview"), icon: TrendingUp },
               { id: "profile", label: t("nav.profile"), icon: UserCircle },
-              { id: "photos", label: t("nav.photos"), icon: Image },
+              { id: "photos", label: t("nav.photos"), icon: ImageIcon },
             ].map((tab) => (
               <button
                 key={tab.id}
