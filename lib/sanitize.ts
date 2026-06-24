@@ -1,10 +1,12 @@
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtmlLib from "sanitize-html";
 
 const ALLOWED_TAGS = [
   "p", "br", "strong", "em", "ul", "ol", "li", "a", "h2", "h3",
 ];
 
-const ALLOWED_ATTR = ["href", "target", "rel"];
+const ALLOWED_ATTR = {
+  a: ["href", "target", "rel"],
+};
 
 /**
  * Sanitize HTML bio content from TipTap / rich editor.
@@ -12,9 +14,9 @@ const ALLOWED_ATTR = ["href", "target", "rel"];
  */
 export function sanitizeHtml(dirty: string | null | undefined): string {
   if (!dirty) return "";
-  return DOMPurify.sanitize(dirty, {
-    ALLOWED_TAGS,
-    ALLOWED_ATTR,
+  return sanitizeHtmlLib(dirty, {
+    allowedTags: ALLOWED_TAGS,
+    allowedAttributes: ALLOWED_ATTR,
   });
 }
 
@@ -23,5 +25,5 @@ export function sanitizeHtml(dirty: string | null | undefined): string {
  */
 export function stripHtml(html: string | null | undefined): string {
   if (!html) return "";
-  return DOMPurify.sanitize(html, { ALLOWED_TAGS: [] });
+  return sanitizeHtmlLib(html, { allowedTags: [] });
 }
