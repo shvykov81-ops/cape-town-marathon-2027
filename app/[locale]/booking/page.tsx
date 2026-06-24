@@ -364,7 +364,7 @@ export default function BookingPage() {
                             <div className="flex items-center gap-3">
                               {(trainer.photos?.[0] || trainer.photoUrl) ? (
                                 <img
-                                  src={trainer.photos?.[0] || trainer.photoUrl}
+                                  src={trainer.photos?.[0] || trainer.photoUrl || ""}
                                   alt={trainer.firstName}
                                   className="w-12 h-12 rounded-full object-cover"
                                   onError={(e) => {
@@ -601,7 +601,7 @@ export default function BookingPage() {
                     <div className="inline-flex items-center gap-3 px-6 py-4 rounded-2xl glass-card mb-8">
                       {(selectedTrainer.photos?.[0] || selectedTrainer.photoUrl) ? (
                         <img
-                          src={selectedTrainer.photos?.[0] || selectedTrainer.photoUrl}
+                          src={selectedTrainer.photos?.[0] || selectedTrainer.photoUrl || ""}
                           alt=""
                           className="w-12 h-12 rounded-full object-cover"
                           onError={(e) => {
@@ -719,11 +719,17 @@ export default function BookingPage() {
                 {selectedTrainer && (
                   <div className="mb-4 pb-4 border-b border-white/10">
                     <div className="flex items-center gap-3">
-                      {selectedTrainer.photoUrl ? (
+                      {(selectedTrainer.photos?.[0] || selectedTrainer.photoUrl) ? (
                         <img
-                          src={selectedTrainer.photoUrl}
+                          src={selectedTrainer.photos?.[0] || selectedTrainer.photoUrl || ""}
                           alt=""
                           className="w-10 h-10 rounded-full object-cover"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            target.style.display = "none";
+                            const fallback = target.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = "flex";
+                          }}
                         />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center">
