@@ -12,6 +12,7 @@ interface Trainer {
   firstName: string;
   lastName: string;
   photoUrl: string | null;
+  photos: string[];
   rating: number;
   reviewCount: number;
   specialties: string[];
@@ -24,6 +25,8 @@ interface TrainerCardCompactProps {
 
 export function TrainerCardCompact({ trainer, index }: TrainerCardCompactProps) {
   const name = trainer.displayName || `${trainer.firstName} ${trainer.lastName}`;
+  // Priority: photos[0] → photoUrl → fallback
+  const imageUrl = trainer.photos?.[0] || trainer.photoUrl;
 
   return (
     <motion.div
@@ -36,20 +39,28 @@ export function TrainerCardCompact({ trainer, index }: TrainerCardCompactProps) 
           <div className="flex items-center gap-3">
             {/* Avatar */}
             <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-[#1e1e2e]">
-              {trainer.photoUrl ? (
+              {imageUrl ? (
                 <Image
-                  src={trainer.photoUrl}
+                  src={imageUrl}
                   alt={name}
                   fill
                   className="object-cover"
                   sizes="48px"
                   loading="lazy"
+                  onError={(e) => {
+                    const target = e.currentTarget as HTMLImageElement;
+                    target.style.display = "none";
+                    const fallback = target.parentElement?.querySelector(".avatar-fallback") as HTMLElement;
+                    if (fallback) fallback.style.display = "flex";
+                  }}
                 />
-              ) : (
-                <div className="w-full h-full bg-[#1a1a25] flex items-center justify-center">
-                  <span className="text-sm font-bold text-[#4a9eff]/40">{name[0]?.toUpperCase()}</span>
-                </div>
-              )}
+              ) : null}
+              <div
+                className="avatar-fallback absolute inset-0 bg-gradient-to-br from-[#1a1a25] to-[#0a0a0f] flex items-center justify-center"
+                style={{ display: imageUrl ? "none" : "flex" }}
+              >
+                <span className="text-sm font-bold text-[#4a9eff]/40">{name[0]?.toUpperCase()}</span>
+              </div>
             </div>
 
             {/* Info */}

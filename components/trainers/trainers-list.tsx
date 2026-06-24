@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { TrainerCardStandard } from "./trainer-card/trainer-card-standard";
+import { useTranslations } from "next-intl";
 
 interface Trainer {
   id: string;
@@ -12,6 +13,7 @@ interface Trainer {
   lastName: string;
   headline: string | null;
   photoUrl: string | null;
+  photos: string[];
   rating: number;
   reviewCount: number;
   specialties: string[];
@@ -30,12 +32,14 @@ interface TrainersListProps {
 }
 
 export function TrainersList({ trainers, totalCount }: TrainersListProps) {
+  const t = useTranslations("trainersPage");
+
   if (trainers.length === 0) {
     return (
       <div className="text-center py-16">
         <div className="text-6xl mb-4">🏃‍♂️</div>
         <h3 className="text-2xl font-bold text-white mb-4">
-          No coaches published yet
+          {t("list.noTrainers")}
         </h3>
         <p className="text-[#8b8b9a] mb-8 max-w-md mx-auto">
           We&apos;re currently onboarding elite coaches. Be the first to join our platform or check back soon!
@@ -43,7 +47,7 @@ export function TrainersList({ trainers, totalCount }: TrainersListProps) {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/account">
             <Button className="bg-[#ff6b35] hover:bg-[#e55a2b] text-white">
-              Apply as Coach
+              {t("cta.button")}
             </Button>
           </Link>
           <Link href="/">
