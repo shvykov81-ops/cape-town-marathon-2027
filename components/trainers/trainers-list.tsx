@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { TrainerCardStandard } from "./trainer-card/trainer-card-standard";
 import { useTranslations } from "next-intl";
 
+// ─── FIX: Align Trainer interface with trainers-container.tsx ───
 interface Trainer {
   id: string;
   slug: string;
@@ -20,6 +21,7 @@ interface Trainer {
   languages: string[];
   experienceYears: number | null;
   profileViews: number;
+  status: string;  // ← ADDED: was missing, required by TrainerCardStandard
   _count?: {
     reviews: number;
     bookings: number;
