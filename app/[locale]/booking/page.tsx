@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Check,
@@ -35,7 +36,6 @@ interface PackageOption {
   category: string;
 }
 
-// ─── FIX B-01: Added slug field ──────────────────────────────────────────
 interface Trainer {
   id: string;
   slug: string;
@@ -62,13 +62,13 @@ const trustIndicators = [
 function toNumber(value: unknown): number {
   if (typeof value === "number") return value;
   if (typeof value === "string") return parseFloat(value) || 0;
-  if (value && typeof value === "object" && "toNumber" in value && typeof (value as Record<string, unknown>).toNumber === "function") {
-    return (value as { toNumber: () => number }).toNumber();
-  }
   return 0;
 }
 
 export default function BookingPage() {
+  const locale = useLocale();
+  const t = useTranslations("booking");
+
   const searchParams = useSearchParams();
   const preselectedPackage = searchParams.get("package");
   const preselectedTrainer = searchParams.get("trainer");
@@ -91,15 +91,18 @@ export default function BookingPage() {
       fetch("/api/trainers").then((r) => r.json()),
     ])
       .then(([pkgs, trs]) => {
-        setPackages(pkgs);
-        setTrainers(trs);
+        setPackages(pkgs.packages || pkgs || []);
+        setTrainers(trs.trainers || trs || []);
         if (preselectedPackage) {
-          const pkg = pkgs.find((p: Package) => p.name.toLowerCase() === preselectedPackage);
+          const pkg = (pkgs.packages || pkgs || []).find(
+            (p: Package) => p.name.toLowerCase() === preselectedPackage.toLowerCase()
+          );
           if (pkg) setSelectedPkg(pkg);
         }
-        // ─── FIX B-01: Match by slug instead of id ─────────────────────
         if (preselectedTrainer) {
-          const trainer = trs.find((t: Trainer) => t.slug === preselectedTrainer);
+          const trainer = (trs.trainers || trs || []).find(
+            (t: Trainer) => t.slug === preselectedTrainer
+          );
           if (trainer) setSelectedTrainer(trainer);
         }
         setLoading(false);
@@ -111,7 +114,7 @@ export default function BookingPage() {
     if (selectedPkg) {
       fetch(`/api/packages/${selectedPkg.id}/options`)
         .then((r) => r.json())
-        .then(setOptions);
+        .then((data) => setOptions(data.options || data || []));
     }
   }, [selectedPkg]);
 
@@ -141,11 +144,11 @@ export default function BookingPage() {
       } else {
         const data = await res.json();
         setStatus("error");
-        setErrorMsg(data.error || "Booking failed");
+        setErrorMsg(data.error || t("errorDefault"));
       }
     } catch {
       setStatus("error");
-      setErrorMsg("Network error");
+      setErrorMsg(t("networkError"));
     }
   };
 
@@ -171,11 +174,13 @@ export default function BookingPage() {
           className="text-center mb-12"
         >
           <h1 className="text-3xl md:text-5xl font-bold mb-4">
-            Book Your{" "}
-            <span className="gradient-text">Experience</span>
+            {t("title")}{" "}
+            <span className="bg-gradient-to-r from-teal-400 to-amber-400 bg-clip-text text-transparent">
+              {t("titleHighlight")}
+            </span>
           </h1>
           <p className="text-neutral-400 max-w-xl mx-auto">
-            Secure your spot at Africa&apos;s first Abbott World Marathon Majors candidate event.
+            {t("subtitle")}
           </p>
         </motion.div>
 
@@ -218,7 +223,7 @@ export default function BookingPage() {
                         isActive ? "text-white" : "text-neutral-500"
                       }`}
                     >
-                      {s.label}
+                      {t(`step${s.id}`)}
                     </span>
                   </div>
                   {i < steps.length - 1 && (
@@ -240,7 +245,7 @@ export default function BookingPage() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                 >
-                  <h2 className="text-2xl font-bold mb-6">Select Your Package</h2>
+                  <h2 className="text-2xl font-bold mb-6">{t("selectPackage")}</h2>
                   {loading ? (
                     <div className="flex items-center justify-center h-64">
                       <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
@@ -268,7 +273,7 @@ export default function BookingPage() {
                               <div className="flex items-center gap-4 text-sm text-neutral-500">
                                 <span className="flex items-center gap-1">
                                   <Calendar className="w-4 h-4" />
-                                  {pkg.durationDays} days
+                                  {pkg.durationDays} {t("days")}
                                 </span>
                                 <span className="flex items-center gap-1">
                                   <Package className="w-4 h-4" />
@@ -287,7 +292,7 @@ export default function BookingPage() {
                                   className="mt-2 inline-flex items-center gap-1 text-xs text-teal-400"
                                 >
                                   <Check className="w-3 h-3" />
-                                  Selected
+                                  {t("selected")}
                                 </motion.div>
                               )}
                             </div>
@@ -306,17 +311,17 @@ export default function BookingPage() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                 >
-                  <h2 className="text-2xl font-bold mb-6">Runner Details</h2>
+                  <h2 className="text-2xl font-bold mb-6">{t("runnerDetails")}</h2>
                   <div className="space-y-4">
                     {[
-                      { key: "firstName", label: "First Name", type: "text", required: true },
-                      { key: "lastName", label: "Last Name", type: "text", required: true },
-                      { key: "email", label: "Email", type: "email", required: true },
-                      { key: "phone", label: "Phone", type: "tel", required: false },
-                      { key: "country", label: "Country", type: "text", required: false },
-                      { key: "dob", label: "Date of Birth", type: "date", required: false },
-                      { key: "checkInDate", label: "Check-in Date", type: "date", required: false },
-                      { key: "checkOutDate", label: "Check-out Date", type: "date", required: false },
+                      { key: "firstName", label: t("firstName"), type: "text", required: true },
+                      { key: "lastName", label: t("lastName"), type: "text", required: true },
+                      { key: "email", label: t("email"), type: "email", required: true },
+                      { key: "phone", label: t("phone"), type: "tel", required: false },
+                      { key: "country", label: t("country"), type: "text", required: false },
+                      { key: "dob", label: t("dob"), type: "date", required: false },
+                      { key: "checkInDate", label: t("checkIn"), type: "date", required: false },
+                      { key: "checkOutDate", label: t("checkOut"), type: "date", required: false },
                     ].map((field) => (
                       <div key={field.key}>
                         <label className="block text-sm font-medium text-neutral-300 mb-2">
@@ -339,7 +344,7 @@ export default function BookingPage() {
 
                   {trainers.length > 0 && (
                     <div className="mt-8">
-                      <h3 className="text-lg font-bold mb-4">Select Trainer (Optional)</h3>
+                      <h3 className="text-lg font-bold mb-4">{t("selectTrainer")}</h3>
                       <div className="grid sm:grid-cols-2 gap-4">
                         {trainers.map((trainer) => (
                           <button
@@ -397,11 +402,11 @@ export default function BookingPage() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                 >
-                  <h2 className="text-2xl font-bold mb-6">Add Extras</h2>
+                  <h2 className="text-2xl font-bold mb-6">{t("addExtras")}</h2>
                   {options.length === 0 ? (
                     <div className="p-8 text-center glass-card rounded-2xl">
                       <Sparkles className="w-12 h-12 text-neutral-600 mx-auto mb-4" />
-                      <p className="text-neutral-400">No additional options for this package.</p>
+                      <p className="text-neutral-400">{t("noExtras")}</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -457,12 +462,12 @@ export default function BookingPage() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                 >
-                  <h2 className="text-2xl font-bold mb-6">Review Your Booking</h2>
+                  <h2 className="text-2xl font-bold mb-6">{t("review")}</h2>
 
                   <div className="space-y-6">
                     <div className="p-6 rounded-2xl glass-card">
                       <h3 className="text-sm font-medium text-neutral-400 mb-4 uppercase tracking-wider">
-                        Package
+                        {t("packageLabel")}
                       </h3>
                       <div className="flex justify-between items-start">
                         <div>
@@ -478,7 +483,7 @@ export default function BookingPage() {
                     {selectedExtras.length > 0 && (
                       <div className="p-6 rounded-2xl glass-card">
                         <h3 className="text-sm font-medium text-neutral-400 mb-4 uppercase tracking-wider">
-                          Extras
+                          {t("extrasLabel")}
                         </h3>
                         <div className="space-y-3">
                           {selectedExtras.map((id) => {
@@ -498,26 +503,26 @@ export default function BookingPage() {
 
                     <div className="p-6 rounded-2xl glass-card">
                       <h3 className="text-sm font-medium text-neutral-400 mb-4 uppercase tracking-wider">
-                        Personal Information
+                        {t("personalInfo")}
                       </h3>
                       <div className="grid sm:grid-cols-2 gap-4 text-sm">
                         <div>
-                          <p className="text-neutral-500">Name</p>
+                          <p className="text-neutral-500">{t("name")}</p>
                           <p className="text-white">{formData.firstName} {formData.lastName}</p>
                         </div>
                         <div>
-                          <p className="text-neutral-500">Email</p>
+                          <p className="text-neutral-500">{t("email")}</p>
                           <p className="text-white">{formData.email}</p>
                         </div>
                         {formData.phone && (
                           <div>
-                            <p className="text-neutral-500">Phone</p>
+                            <p className="text-neutral-500">{t("phone")}</p>
                             <p className="text-white">{formData.phone}</p>
                           </div>
                         )}
                         {selectedTrainer && (
                           <div>
-                            <p className="text-neutral-500">Trainer</p>
+                            <p className="text-neutral-500">{t("trainer")}</p>
                             <p className="text-white">
                               {selectedTrainer.firstName} {selectedTrainer.lastName}
                             </p>
@@ -545,19 +550,19 @@ export default function BookingPage() {
                       {status === "submitting" ? (
                         <>
                           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Processing...
+                          {t("processing")}
                         </>
                       ) : (
                         <>
                           <Lock className="w-5 h-5" />
-                          Confirm Booking — ${total.toLocaleString()}
+                          {t("confirm")} — ${total.toLocaleString()}
                         </>
                       )}
                     </button>
 
                     <p className="text-center text-xs text-neutral-500 flex items-center justify-center gap-1">
                       <Shield className="w-3 h-3" />
-                      Your data is encrypted and protected
+                      {t("secureNote")}
                     </p>
                   </div>
                 </motion.div>
@@ -578,10 +583,9 @@ export default function BookingPage() {
                   >
                     <Check className="w-10 h-10 text-teal-400" />
                   </motion.div>
-                  <h2 className="text-3xl font-bold mb-4">Booking Confirmed!</h2>
+                  <h2 className="text-3xl font-bold mb-4">{t("successTitle")}</h2>
                   <p className="text-neutral-400 mb-8 max-w-md mx-auto">
-                    Thank you for registering for the Cape Town Marathon 2027 Prep Camp.
-                    A confirmation has been sent to your dashboard.
+                    {t("successMessage")}
                   </p>
                   {selectedTrainer && (
                     <div className="inline-flex items-center gap-3 px-6 py-4 rounded-2xl glass-card mb-8">
@@ -590,12 +594,6 @@ export default function BookingPage() {
                           src={selectedTrainer.photos?.[0] || selectedTrainer.photoUrl || ""}
                           alt=""
                           className="w-12 h-12 rounded-full object-cover"
-                          onError={(e) => {
-                            const target = e.currentTarget;
-                            target.style.display = "none";
-                            const fallback = target.nextElementSibling as HTMLElement;
-                            if (fallback) fallback.style.display = "flex";
-                          }}
                         />
                       ) : (
                         <div className="w-12 h-12 rounded-full bg-teal-500/20 flex items-center justify-center">
@@ -603,7 +601,7 @@ export default function BookingPage() {
                         </div>
                       )}
                       <div className="text-left">
-                        <p className="text-sm text-neutral-500">Your trainer</p>
+                        <p className="text-sm text-neutral-500">{t("yourTrainer")}</p>
                         <p className="font-bold text-white">
                           {selectedTrainer.firstName} {selectedTrainer.lastName}
                         </p>
@@ -612,17 +610,17 @@ export default function BookingPage() {
                   )}
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Link
-                      href="/dashboard"
+                      href={`/${locale}/dashboard`}
                       className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-teal-500 text-white font-semibold hover:bg-teal-400 transition-colors"
                     >
-                      Go to Dashboard
+                      {t("goDashboard")}
                       <ChevronRight className="w-4 h-4" />
                     </Link>
                     <Link
-                      href="/"
+                      href={`/${locale}`}
                       className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl glass-card text-white font-semibold hover:bg-white/10 transition-colors"
                     >
-                      Back to Home
+                      {t("backHome")}
                     </Link>
                   </div>
                 </motion.div>
@@ -637,14 +635,14 @@ export default function BookingPage() {
                   className="flex items-center gap-2 px-6 py-3 rounded-xl glass-card text-neutral-300 hover:text-white hover:bg-white/10 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  Back
+                  {t("back")}
                 </button>
                 <button
                   onClick={() => setStep((s) => Math.min(4, s + 1))}
                   disabled={!canProceed() || step === 4}
                   className="flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-500 text-white font-semibold hover:bg-teal-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  {step === 3 ? "Review" : "Continue"}
+                  {step === 3 ? t("reviewBtn") : t("continue")}
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -659,7 +657,7 @@ export default function BookingPage() {
                 transition={{ delay: 0.3 }}
                 className="p-6 rounded-2xl glass-card"
               >
-                <h3 className="text-lg font-bold mb-6">Order Summary</h3>
+                <h3 className="text-lg font-bold mb-6">{t("orderSummary")}</h3>
 
                 <div className="flex items-center justify-between mb-6 pb-6 border-b border-white/10">
                   {trustIndicators.map((t) => (
@@ -678,7 +676,7 @@ export default function BookingPage() {
                         ${toNumber(selectedPkg.priceBase).toLocaleString()}
                       </span>
                     </div>
-                    <span className="text-xs text-neutral-600">{selectedPkg.durationDays} days</span>
+                    <span className="text-xs text-neutral-600">{selectedPkg.durationDays} {t("days")}</span>
                   </div>
                 )}
 
@@ -704,12 +702,6 @@ export default function BookingPage() {
                           src={selectedTrainer.photos?.[0] || selectedTrainer.photoUrl || ""}
                           alt=""
                           className="w-10 h-10 rounded-full object-cover"
-                          onError={(e) => {
-                            const target = e.currentTarget;
-                            target.style.display = "none";
-                            const fallback = target.nextElementSibling as HTMLElement;
-                            if (fallback) fallback.style.display = "flex";
-                          }}
                         />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center">
@@ -720,20 +712,20 @@ export default function BookingPage() {
                         <p className="text-sm font-medium text-white">
                           {selectedTrainer.firstName} {selectedTrainer.lastName}
                         </p>
-                        <p className="text-xs text-teal-400">Your Trainer</p>
+                        <p className="text-xs text-teal-400">{t("yourTrainer")}</p>
                       </div>
                     </div>
                   </div>
                 )}
 
                 <div className="flex justify-between items-center pt-2">
-                  <span className="text-lg font-bold text-white">Total</span>
+                  <span className="text-lg font-bold text-white">{t("total")}</span>
                   <span className="text-2xl font-bold gradient-text">${total.toLocaleString()}</span>
                 </div>
 
                 <div className="mt-6 flex items-center gap-2 text-xs text-neutral-500">
                   <Lock className="w-3 h-3" />
-                  Secure booking. Your data is encrypted.
+                  {t("secureNote")}
                 </div>
               </motion.div>
             </div>

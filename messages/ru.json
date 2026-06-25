@@ -1,7 +1,7 @@
 {
   "metadata": {
     "title": "RUN & Travel — Марафон Кейптаун 2027",
-    "description": "Первый кандидат из Африки в серию Abbott World Marathon Majors. Платформа бронирования подготовительного лагеря."
+    "description": "Первый из Африки Abbott World Marathon Majors. Платформа бронирования подготовительного лагеря."
   },
   "navigation": {
     "home": "Главная",
@@ -19,7 +19,7 @@
     "booking": "Забронировать"
   },
   "hero": {
-    "badge": "Первый кандидат Abbott WMM из Африки",
+    "badge": "Первый Abbott WMM из Африки",
     "line1": "МАРАФОН",
     "line2": "КЕЙПТАУН",
     "line3": "2027",
@@ -34,9 +34,9 @@
     "statCoaches": "Тренеры"
   },
   "features": {
-    "badge": "Кандидат Abbott WMM",
+    "badge": "Марафон Abbott WMM",
     "title": "Откройте Кейптаун 2027",
-    "subtitle": "Присоединяйтесь к первому кандидату из Африки в серию Abbott World Marathon Majors. Тренируйтесь с элитными тренерами, исследуйте Кейптаун и станьте частью истории.",
+    "subtitle": "Присоединяйтесь к первому из Африки Abbott World Marathon Majors. Тренируйтесь с элитными тренерами, исследуйте Кейптаун и станьте частью истории.",
     "feature1Title": "Элитная подготовка",
     "feature1Desc": "Тренируйтесь с сертифицированными тренерами",
     "feature2Title": "Сообщество",
@@ -195,6 +195,8 @@
     "secureNote": "Безопасное бронирование. Ваши данные зашифрованы.",
     "ssl": "SSL защита",
     "encrypted": "Шифрование",
+    "errorDefault": "Ошибка бронирования",
+    "networkError": "Ошибка сети",
     "verified": "Проверено"
   },
   "contact": {
@@ -222,7 +224,7 @@
   },
   "footer": {
     "brand": "RUN & Travel",
-    "tagline": "Первый кандидат из Африки в серию Abbott World Marathon Majors.",
+    "tagline": "Первый из Африки Abbott World Marathon Majors.",
     "telegram": "Присоединяйтесь в Telegram",
     "event": "Событие",
     "services": "Услуги",
@@ -1092,6 +1094,7 @@
       "confirmDelete": "Вы уверены, что хотите удалить этого тренера?",
       "profileViews": "Просмотров",
       "bookings": "Бронирований",
+      "bookSession": "Забронировать",
       "reviews": "Отзывов"
     },
     "revisionCard": {
